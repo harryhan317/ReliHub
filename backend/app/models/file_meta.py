@@ -52,8 +52,8 @@ class FileMeta(Base):
     ref_counts: Mapped[int] = mapped_column(Integer, default=1)  # Global reference count
 
     # ── Status ────────────────────────────────────────────────────────────────
-    status: Mapped[FileStatus] = mapped_column(SQLEnum(FileStatus), default=FileStatus.SCANNING, index=True)
-    lifecycle_status: Mapped[LifecycleStatus] = mapped_column(SQLEnum(LifecycleStatus), default=LifecycleStatus.ACTIVE, index=True)
+    status: Mapped[str] = mapped_column(String(50), default=FileStatus.SCANNING.value, index=True)
+    lifecycle_status: Mapped[str] = mapped_column(String(50), default=LifecycleStatus.ACTIVE.value, index=True)
 
     # ── Uploader ──────────────────────────────────────────────────────────────
     uploader_uid: Mapped[str] = mapped_column(String(36), index=True)  # FK -> users.id (first uploader)
@@ -71,9 +71,10 @@ class FileUsage(Base):
 
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    # ── File Reference ────────────────────────────────────────────────────────
     file_uuid: Mapped[str] = mapped_column(String(36), index=True)  # FK -> file_meta.file_uuid
     target_id: Mapped[str] = mapped_column(String(36), index=True)  # Reference target (Conversation/Resource/Topic ID)
-    target_type: Mapped[TargetType] = mapped_column(SQLEnum(TargetType))
+    target_type: Mapped[str] = mapped_column(String(50))  # Target type: CONVERSATION/RESOURCE/TOPIC
     user_id: Mapped[str] = mapped_column(String(36))  # Current referencing user ID
 
     # ── Timestamps ────────────────────────────────────────────────────────────

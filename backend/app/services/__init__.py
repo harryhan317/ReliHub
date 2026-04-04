@@ -2,8 +2,17 @@
 Service layer for all modules.
 """
 
-from .auth_service import AuthService
-from .sms_service import SMSService
+# Auth functions (not a class)
+from .auth_service import (
+    register_by_phone,
+    login_by_password,
+    login_by_wechat,
+    refresh_access_token,
+    logout,
+    is_token_blacklisted,
+    blacklist_token,
+)
+from .sms_service import send_verification_code, verify_code
 from .ai_service import AISessionService, AIMessageService
 from .resource_service import ResourceService
 from .community_service import TopicService, PostService
@@ -13,8 +22,15 @@ from .file_service import FileService
 
 __all__ = [
     # Auth
-    "AuthService",
-    "SMSService",
+    "register_by_phone",
+    "login_by_password",
+    "login_by_wechat",
+    "refresh_access_token",
+    "logout",
+    "is_token_blacklisted",
+    "blacklist_token",
+    "send_verification_code",
+    "verify_code",
     # AI
     "AISessionService",
     "AIMessageService",

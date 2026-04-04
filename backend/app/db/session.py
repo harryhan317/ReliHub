@@ -17,7 +17,7 @@ if "sqlite" in _db_url:
     # Import all models so Base.metadata knows about them
     from app.models.users import User  # noqa: F401
     from app.models.resources import Resource  # noqa: F401
-    from app.models.ledger import CocoaBeanLedger, ReputationLog  # noqa: F401
+    from app.models.ledger import PointLedger  # noqa: F401
     from app.models.administrators import AdminUser, AdminAuditLog  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
