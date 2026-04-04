@@ -1,0 +1,11 @@
+[project]
+name = "relihub-backend"
+version = "0.1.0"
+description = "ReliHub MVP Backend"
+readme = "README.md"
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]
+ignore = ["E501"]
