@@ -51,6 +51,9 @@ logs/
 .env
 .env.local
 .env.*.local
+.env
+.env.local
+.env.*.local
 
 # Backend specific
 backend/__pycache__/
