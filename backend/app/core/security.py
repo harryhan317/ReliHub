@@ -2,15 +2,15 @@
 JWT token management and Argon2id password hashing.
 Aligned with: DB_users.md §9 (Argon2id), API_认证鉴权.md §2 (JWT).
 """
-import uuid
-import hmac
 import hashlib
+import hmac
+import uuid
 from datetime import datetime, timedelta
 from typing import Optional
 
-from jose import jwt, JWTError, ExpiredSignatureError
 from argon2 import PasswordHasher, Type
-from argon2.exceptions import VerifyMismatchError, VerificationError
+from argon2.exceptions import VerificationError, VerifyMismatchError
+from jose import jwt
 
 from app.core.config import settings
 

@@ -1,27 +1,27 @@
 """
 Service layer for Notification module.
 """
-from typing import Optional, List, Tuple
-from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
 import uuid
+from datetime import datetime
+from typing import List, Optional, Tuple
 
-from app.models.notification import Notification, NotificationType, NotificationPriority
+from sqlalchemy import and_, func, select
+from sqlalchemy.orm import Session
+
+from app.models.notification import Notification, NotificationType
 from app.schemas.notification import (
-    CreateNotificationRequest,
     BroadcastRequest,
-    MarkAsReadRequest,
+    CreateNotificationRequest,
 )
 
 
 class NotificationService:
     """Service class for Notification management"""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
-    async def create_notification(
+    def create_notification(
         self,
         request: CreateNotificationRequest,
         sender_id: Optional[str] = None
@@ -40,11 +40,11 @@ class NotificationService:
         )
         
         self.db.add(notification)
-        await self.db.commit()
-        await self.db.refresh(notification)
+        self.db.commit()
+        self.db.refresh(notification)
         return notification
 
-    async def get_notifications(
+    def get_notifications(
         self,
         user_id: str,
         notification_type: Optional[NotificationType] = None,
@@ -53,7 +53,6 @@ class NotificationService:
         page_size: int = 20
     ) -> Tuple[List[Notification], int]:
         """Get notifications for a user with pagination"""
-        # Build filters
         filters = [Notification.receiver_id == user_id]
         
         if notification_type:
@@ -62,11 +61,9 @@ class NotificationService:
         if unread_only:
             filters.append(Notification.is_read == False)
         
-        # Get total count
         count_query = select(func.count()).where(and_(*filters))
-        total = (await self.db.execute(count_query)).scalar()
+        total = self.db.execute(count_query).scalar()
         
-        # Get paginated results
         query = (
             select(Notification)
             .where(and_(*filters))
@@ -75,12 +72,12 @@ class NotificationService:
             .limit(page_size)
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         notifications = result.scalars().all()
         
         return list(notifications), total
 
-    async def mark_as_read(
+    def mark_as_read(
         self,
         user_id: str,
         notification_ids: List[str]
@@ -92,7 +89,7 @@ class NotificationService:
             Notification.is_read == False
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         notifications = result.scalars().all()
         
         count = 0
@@ -102,11 +99,11 @@ class NotificationService:
             count += 1
         
         if count > 0:
-            await self.db.commit()
+            self.db.commit()
         
         return count
 
-    async def mark_all_as_read(
+    def mark_all_as_read(
         self,
         user_id: str
     ) -> int:
@@ -116,7 +113,7 @@ class NotificationService:
             Notification.is_read == False
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         notifications = result.scalars().all()
         
         count = 0
@@ -126,11 +123,11 @@ class NotificationService:
             count += 1
         
         if count > 0:
-            await self.db.commit()
+            self.db.commit()
         
         return count
 
-    async def get_unread_count(
+    def get_unread_count(
         self,
         user_id: str
     ) -> int:
@@ -140,21 +137,18 @@ class NotificationService:
             Notification.is_read == False
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar()
 
-    async def broadcast(
+    def broadcast(
         self,
         request: BroadcastRequest,
         exclude_user_ids: Optional[List[str]] = None
     ) -> int:
         """Broadcast notification to all users"""
-        # Get all user IDs (excluding specified ones)
-        # Note: In production, you'd query the users table
-        # For now, we'll create a placeholder implementation
         notification = Notification(
             id=str(uuid.uuid4()),
-            receiver_id="BROADCAST",  # Special marker for broadcast
+            receiver_id="BROADCAST",
             sender_id=None,
             type=request.type,
             priority=request.priority,
@@ -165,13 +159,11 @@ class NotificationService:
         )
         
         self.db.add(notification)
-        await self.db.commit()
+        self.db.commit()
         
-        # In production, this would fan out to all users
-        # For now, return 1 to indicate the broadcast was created
         return 1
 
-    async def get_notification(
+    def get_notification(
         self,
         notification_id: str,
         user_id: str
@@ -182,43 +174,40 @@ class NotificationService:
             Notification.receiver_id == user_id
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def delete_notification(
+    def delete_notification(
         self,
         notification_id: str,
         user_id: str
     ) -> bool:
         """Delete a notification"""
-        notification = await self.get_notification(notification_id, user_id)
+        notification = self.get_notification(notification_id, user_id)
         
         if not notification:
             return False
         
-        await self.db.delete(notification)
-        await self.db.commit()
+        self.db.delete(notification)
+        self.db.commit()
         return True
 
-    async def get_stats(
+    def get_stats(
         self,
         user_id: str
     ) -> dict:
         """Get notification statistics"""
-        # Total count
         total_query = select(func.count()).where(
             Notification.receiver_id == user_id
         )
-        total = (await self.db.execute(total_query)).scalar()
+        total = self.db.execute(total_query).scalar()
         
-        # Unread count
         unread_query = select(func.count()).where(
             Notification.receiver_id == user_id,
             Notification.is_read == False
         )
-        unread = (await self.db.execute(unread_query)).scalar()
+        unread = self.db.execute(unread_query).scalar()
         
-        # By type
         type_query = select(
             Notification.type,
             func.count()
@@ -226,7 +215,7 @@ class NotificationService:
             Notification.receiver_id == user_id
         ).group_by(Notification.type)
         
-        type_result = await self.db.execute(type_query)
+        type_result = self.db.execute(type_query)
         by_type = {row[0].value: row[1] for row in type_result.all()}
         
         return {

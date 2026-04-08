@@ -1,6 +1,8 @@
 import os
-from sqlalchemy import create_engine, event
+
+from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+
 from app.core.config import settings
 from app.models import Base
 
@@ -15,10 +17,10 @@ engine = create_engine(_db_url, connect_args={"check_same_thread": False} if "sq
 # Create all tables on startup (SQLite dev mode)
 if "sqlite" in _db_url:
     # Import all models so Base.metadata knows about them
-    from app.models.users import User  # noqa: F401
-    from app.models.resources import Resource  # noqa: F401
+    from app.models.administrators import AdminAuditLog, AdminUser  # noqa: F401
     from app.models.ledger import PointLedger  # noqa: F401
-    from app.models.administrators import AdminUser, AdminAuditLog  # noqa: F401
+    from app.models.resources import Resource  # noqa: F401
+    from app.models.users import User  # noqa: F401
     Base.metadata.create_all(bind=engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

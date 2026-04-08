@@ -1,10 +1,11 @@
 """
 Pydantic Schemas for Resource Management module.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ResourceStatus(str, Enum):
@@ -16,8 +17,6 @@ class ResourceStatus(str, Enum):
     APPEALING = "APPEALING"
     BLOCKED = "BLOCKED"
 
-
-# ── Request Schemas ───────────────────────────────────────────────────────────
 
 class ResourceCreateRequest(BaseModel):
     """Request schema for creating a resource"""
@@ -49,22 +48,21 @@ class ResourceAppealRequest(BaseModel):
     reason: str = Field(..., min_length=10, max_length=1000, description="Appeal reason")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class ResourcePreviewResponse(BaseModel):
     """Response schema for resource preview"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     resource_id: str
     preview_url: str
     page_number: Optional[int] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class ResourceResponse(BaseModel):
     """Response schema for a single resource"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     uploader_id: str
     title: str
@@ -85,12 +83,11 @@ class ResourceResponse(BaseModel):
     updated_at: datetime
     previews: Optional[List[ResourcePreviewResponse]] = None
 
-    class Config:
-        from_attributes = True
-
 
 class ResourceListItem(BaseModel):
     """Response schema for resource list item"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     title: str
     description: Optional[str] = None
@@ -104,9 +101,6 @@ class ResourceListItem(BaseModel):
     status: ResourceStatus
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class ResourceListResponse(BaseModel):
     """Response schema for resource list with pagination"""
@@ -118,11 +112,10 @@ class ResourceListResponse(BaseModel):
 
 class CategoryResponse(BaseModel):
     """Response schema for resource category"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     name: str
     parent_id: Optional[int] = None
     level: int
     sort_order: int
-
-    class Config:
-        from_attributes = True

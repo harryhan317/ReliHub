@@ -1,12 +1,13 @@
 """
 User ORM model – fully aligned with DB_users.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, Float
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
 from datetime import datetime
 from typing import Optional
+
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import func
+
 from . import Base
 
 
@@ -56,3 +57,21 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_login_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    # ── Relationships ─────────────────────────────────────────────────────────
+    payment_orders = relationship(
+        "PaymentOrder",
+        back_populates="user",
+        foreign_keys="PaymentOrder.user_id"
+    )
+    balance = relationship(
+        "UserBalance",
+        back_populates="user",
+        uselist=False,
+        foreign_keys="UserBalance.user_id"
+    )
+    balance_transactions = relationship(
+        "BalanceTransaction",
+        back_populates="user",
+        foreign_keys="BalanceTransaction.user_id"
+    )

@@ -1,28 +1,27 @@
 """
 Service layer for Resource Management module.
 """
-from typing import Optional, List, Tuple
-from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import selectinload
 import uuid
+from typing import List, Optional, Tuple
+
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.orm import Session
 
 from app.models.resources import Resource, ResourcePreview, ResourceStatus
 from app.schemas.resource import (
     ResourceCreateRequest,
-    ResourceUpdateRequest,
     ResourceReviewRequest,
+    ResourceUpdateRequest,
 )
 
 
 class ResourceService:
     """Service class for Resource management"""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
-    async def create_resource(
+    def create_resource(
         self,
         uploader_id: str,
         request: ResourceCreateRequest
@@ -41,11 +40,11 @@ class ResourceService:
         )
         
         self.db.add(resource)
-        await self.db.commit()
-        await self.db.refresh(resource)
+        self.db.commit()
+        self.db.refresh(resource)
         return resource
 
-    async def get_resource(
+    def get_resource(
         self,
         resource_id: str,
         include_previews: bool = True
@@ -57,13 +56,25 @@ class ResourceService:
             Resource.status == ResourceStatus.APPROVED
         )
         
-        if include_previews:
-            query = query.options(selectinload(Resource.previews))
+        result = self.db.execute(query)
+        resource = result.scalar_one_or_none()
         
-        result = await self.db.execute(query)
-        return result.scalar_one_or_none()
+        if resource and include_previews:
+            previews = self.get_previews(resource_id)
+            resource.previews = previews
+        
+        return resource
+    
+    def get_previews(self, resource_id: str) -> List[ResourcePreview]:
+        """Get previews for a resource"""
+        query = select(ResourcePreview).where(
+            ResourcePreview.resource_id == resource_id
+        ).order_by(ResourcePreview.page_number)
+        
+        result = self.db.execute(query)
+        return list(result.scalars().all())
 
-    async def list_resources(
+    def list_resources(
         self,
         category_id: Optional[int] = None,
         search: Optional[str] = None,
@@ -72,7 +83,6 @@ class ResourceService:
         page_size: int = 20
     ) -> Tuple[List[Resource], int]:
         """List resources with filters and pagination"""
-        # Build filters
         filters = [
             Resource.is_deleted == False,
             Resource.status == ResourceStatus.APPROVED
@@ -89,11 +99,9 @@ class ResourceService:
                 )
             )
         
-        # Get total count
         count_query = select(func.count()).where(and_(*filters))
-        total = (await self.db.execute(count_query)).scalar()
+        total = self.db.execute(count_query).scalar()
         
-        # Build sorting
         sort_columns = {
             "heat_score": Resource.heat_score.desc(),
             "created_at": Resource.created_at.desc(),
@@ -103,7 +111,6 @@ class ResourceService:
         }
         order_by = sort_columns.get(sort_by, Resource.heat_score.desc())
         
-        # Get paginated results
         query = (
             select(Resource)
             .where(and_(*filters))
@@ -112,12 +119,12 @@ class ResourceService:
             .limit(page_size)
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         resources = result.scalars().all()
         
         return list(resources), total
 
-    async def update_resource(
+    def update_resource(
         self,
         resource_id: str,
         uploader_id: str,
@@ -129,38 +136,37 @@ class ResourceService:
             Resource.uploader_id == uploader_id,
             Resource.is_deleted == False
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         resource = result.scalar_one_or_none()
         
         if not resource:
             return None
         
-        # Update fields
         update_data = request.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             if field == "tags" and value is not None:
                 value = ",".join(value) if isinstance(value, list) else value
             setattr(resource, field, value)
         
-        await self.db.commit()
-        await self.db.refresh(resource)
+        self.db.commit()
+        self.db.refresh(resource)
         return resource
 
-    async def delete_resource(
+    def delete_resource(
         self,
         resource_id: str,
         uploader_id: str
     ) -> bool:
         """Soft delete a resource"""
-        resource = await self.get_resource_admin(resource_id, uploader_id)
+        resource = self.get_resource_admin(resource_id, uploader_id)
         if not resource:
             return False
         
         resource.is_deleted = True
-        await self.db.commit()
+        self.db.commit()
         return True
 
-    async def get_resource_admin(
+    def get_resource_admin(
         self,
         resource_id: str,
         uploader_id: Optional[str] = None
@@ -174,25 +180,25 @@ class ResourceService:
         if uploader_id:
             query = query.where(Resource.uploader_id == uploader_id)
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def review_resource(
+    def review_resource(
         self,
         resource_id: str,
         request: ResourceReviewRequest
     ) -> Optional[Resource]:
         """Review a resource (admin operation)"""
-        resource = await self.get_resource_admin(resource_id)
+        resource = self.get_resource_admin(resource_id)
         if not resource:
             return None
         
         resource.status = request.status
-        await self.db.commit()
-        await self.db.refresh(resource)
+        self.db.commit()
+        self.db.refresh(resource)
         return resource
 
-    async def add_preview(
+    def add_preview(
         self,
         resource_id: str,
         preview_url: str,
@@ -207,37 +213,37 @@ class ResourceService:
         )
         
         self.db.add(preview)
-        await self.db.commit()
-        await self.db.refresh(preview)
+        self.db.commit()
+        self.db.refresh(preview)
         return preview
 
-    async def increment_view(self, resource_id: str) -> bool:
+    def increment_view(self, resource_id: str) -> bool:
         """Increment view count"""
-        resource = await self.get_resource_admin(resource_id)
+        resource = self.get_resource_admin(resource_id)
         if resource:
             resource.view_count += 1
-            await self.db.commit()
+            self.db.commit()
             return True
         return False
 
-    async def increment_download(self, resource_id: str) -> bool:
+    def increment_download(self, resource_id: str) -> bool:
         """Increment download count"""
-        resource = await self.get_resource_admin(resource_id)
+        resource = self.get_resource_admin(resource_id)
         if resource:
             resource.download_count += 1
-            await self.db.commit()
+            self.db.commit()
             return True
         return False
 
-    async def update_heat_score(
+    def update_heat_score(
         self,
         resource_id: str,
         heat_score: float
     ) -> bool:
         """Update heat score"""
-        resource = await self.get_resource_admin(resource_id)
+        resource = self.get_resource_admin(resource_id)
         if resource:
             resource.heat_score = heat_score
-            await self.db.commit()
+            self.db.commit()
             return True
         return False

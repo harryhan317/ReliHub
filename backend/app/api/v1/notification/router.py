@@ -1,49 +1,48 @@
 """
 API routes for Notification module.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from app.core.deps import get_db, get_current_user
-from app.services.notification_service import NotificationService
-from app.schemas.notification import (
-    NotificationType,
-    NotificationPriority,
-    MarkAsReadRequest,
-    CreateNotificationRequest,
-    BroadcastRequest,
-    NotificationResponse,
-    NotificationListResponse,
-    NotificationListItem,
-    NotificationStatsResponse,
-)
-from app.models.users import User
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
 
-router = APIRouter(prefix="/notifications", tags=["通知管理"])
+from app.core.deps import get_current_user, get_db
+from app.models.users import User
+from app.schemas.notification import (
+    BroadcastRequest,
+    CreateNotificationRequest,
+    MarkAsReadRequest,
+    NotificationListItem,
+    NotificationListResponse,
+    NotificationResponse,
+    NotificationStatsResponse,
+    NotificationType,
+)
+from app.services.notification_service import NotificationService
+
+router = APIRouter(tags=["通知管理"])
 
 
 @router.get("", response_model=NotificationListResponse)
-async def get_notifications(
+def get_notifications(
     notification_type: Optional[NotificationType] = Query(None),
     unread_only: bool = False,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get user's notifications"""
     service = NotificationService(db)
-    notifications, total = await service.get_notifications(
-        current_user.user_uuid,
+    notifications, total = service.get_notifications(
+        current_user.id,
         notification_type,
         unread_only,
         page,
         page_size,
     )
     
-    # Get unread count
-    unread_count = await service.get_unread_count(current_user.user_uuid)
+    unread_count = service.get_unread_count(current_user.id)
     
     return NotificationListResponse(
         notifications=[NotificationListItem.model_validate(n) for n in notifications],
@@ -55,16 +54,16 @@ async def get_notifications(
 
 
 @router.get("/{notification_id}", response_model=NotificationResponse)
-async def get_notification(
+def get_notification(
     notification_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get a specific notification"""
     service = NotificationService(db)
-    notification = await service.get_notification(
+    notification = service.get_notification(
         notification_id,
-        current_user.user_uuid,
+        current_user.id,
     )
     
     if not notification:
@@ -74,15 +73,15 @@ async def get_notification(
 
 
 @router.post("/mark-as-read")
-async def mark_as_read(
+def mark_as_read(
     request: MarkAsReadRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Mark notifications as read"""
     service = NotificationService(db)
-    count = await service.mark_as_read(
-        current_user.user_uuid,
+    count = service.mark_as_read(
+        current_user.id,
         request.notification_ids,
     )
     
@@ -93,13 +92,13 @@ async def mark_as_read(
 
 
 @router.post("/mark-all-as-read")
-async def mark_all_as_read(
-    db: AsyncSession = Depends(get_db),
+def mark_all_as_read(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Mark all notifications as read"""
     service = NotificationService(db)
-    count = await service.mark_all_as_read(current_user.user_uuid)
+    count = service.mark_all_as_read(current_user.id)
     
     return {
         "message": f"All {count} notifications marked as read",
@@ -108,27 +107,27 @@ async def mark_all_as_read(
 
 
 @router.get("/stats", response_model=NotificationStatsResponse)
-async def get_stats(
-    db: AsyncSession = Depends(get_db),
+def get_stats(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get notification statistics"""
     service = NotificationService(db)
-    stats = await service.get_stats(current_user.user_uuid)
+    stats = service.get_stats(current_user.id)
     return stats
 
 
 @router.delete("/{notification_id}")
-async def delete_notification(
+def delete_notification(
     notification_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a notification"""
     service = NotificationService(db)
-    success = await service.delete_notification(
+    success = service.delete_notification(
         notification_id,
-        current_user.user_uuid,
+        current_user.id,
     )
     
     if not success:
@@ -137,12 +136,10 @@ async def delete_notification(
     return {"message": "Notification deleted"}
 
 
-# ── Admin Routes ──────────────────────────────────────────────────────────────
-
 @router.post("/admin/create")
-async def create_notification(
+def create_notification(
     request: CreateNotificationRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -151,18 +148,18 @@ async def create_notification(
     TODO: Add admin permission check
     """
     service = NotificationService(db)
-    notification = await service.create_notification(
+    notification = service.create_notification(
         request,
-        sender_id=current_user.user_uuid,
+        sender_id=current_user.id,
     )
     
     return NotificationResponse.model_validate(notification)
 
 
 @router.post("/admin/broadcast")
-async def broadcast_notification(
+def broadcast_notification(
     request: BroadcastRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -172,7 +169,7 @@ async def broadcast_notification(
     TODO: Implement fan-out to all users
     """
     service = NotificationService(db)
-    count = await service.broadcast(
+    count = service.broadcast(
         request,
         request.exclude_user_ids,
     )

@@ -1,10 +1,11 @@
 """
 Pydantic Schemas for Ledger/Economy module.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PointType(str, Enum):
@@ -34,8 +35,6 @@ class OrderType(str, Enum):
     FEEDBACK_AWARD = "FEEDBACK_AWARD"
 
 
-# ── Request Schemas ───────────────────────────────────────────────────────────
-
 class RechargeRequest(BaseModel):
     """Request schema for recharging cocoa beans"""
     amount: int = Field(..., ge=10, le=10000, description="Recharge amount in CNY")
@@ -52,10 +51,10 @@ class AssetPackagePurchaseRequest(BaseModel):
     package_id: str = Field(..., description="Asset package ID")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class PointLedgerResponse(BaseModel):
     """Response schema for a point ledger entry"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     transaction_uuid: str
     user_id: str
@@ -67,9 +66,6 @@ class PointLedgerResponse(BaseModel):
     related_id: Optional[str] = None
     description: Optional[str] = None
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class PointLedgerListResponse(BaseModel):
@@ -91,6 +87,8 @@ class UserBalanceResponse(BaseModel):
 
 class AssetPackageResponse(BaseModel):
     """Response schema for asset package"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     name: str
     price_beans: int
@@ -98,12 +96,11 @@ class AssetPackageResponse(BaseModel):
     discount_rate: float
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class UserPurchasedAssetResponse(BaseModel):
     """Response schema for user purchased asset"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: str
     package_id: str
@@ -113,21 +110,17 @@ class UserPurchasedAssetResponse(BaseModel):
     is_active: bool
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class AttemptedTransactionResponse(BaseModel):
     """Response schema for attempted transaction (dead letter)"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: str
     order_type: OrderType
     amount: int
     reason: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class TransactionHistoryResponse(BaseModel):

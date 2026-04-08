@@ -5,28 +5,27 @@ Aligned with: API_认证鉴权.md §2 (all endpoints).
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db
-from app.core.security import create_access_token, create_refresh_token
 from app.core.deps import get_current_user
+from app.core.security import create_access_token, create_refresh_token
+from app.db.session import get_db
+from app.models.users import User
 from app.schemas.auth import (
-    SendCodeRequest,
-    PhoneRegisterRequest,
     LoginRequest,
-    WechatLoginRequest,
+    PhoneRegisterRequest,
     RefreshTokenRequest,
+    SendCodeRequest,
     TokenResponse,
     UserInfoResponse,
+    WechatLoginRequest,
 )
 from app.schemas.common import ApiResponse
 from app.services import sms_service
 from app.services.auth_service import (
-    register_by_phone,
     login_by_password,
     login_by_wechat,
     refresh_access_token,
-    logout as do_logout,
+    register_by_phone,
 )
-from app.models.users import User
 
 router = APIRouter()
 

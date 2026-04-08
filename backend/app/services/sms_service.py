@@ -2,9 +2,8 @@
 SMS verification code service (MVP: mock mode).
 Aligned with: PRD_MVP_登录注册模块.md §3.1 (rate limiting), §3.2 (lifecycle).
 """
-import random
 import logging
-from typing import Optional
+import random
 
 from app.core.config import settings
 from app.core.exceptions import BusinessException, ErrorCode

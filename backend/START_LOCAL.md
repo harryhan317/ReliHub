@@ -104,6 +104,56 @@ chmod +x start_local.sh
 
 ---
 
+## 🧪 测试环境配置
+
+> ⚠️ **重要**: 所有测试必须使用 PostgreSQL 数据库，严禁使用 SQLite。
+
+### 创建测试数据库
+
+```bash
+# 创建测试数据库
+createdb -U postgres relihub_test
+
+# 或者使用 psql
+psql -U postgres -c "CREATE DATABASE relihub_test OWNER postgres;"
+```
+
+### 配置测试环境变量
+
+在 `.env` 文件中添加测试数据库配置：
+
+```bash
+# 测试数据库连接 (必须使用 PostgreSQL)
+TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5432/relihub_test
+```
+
+### 运行测试
+
+```bash
+cd backend
+source .venv/bin/activate
+
+# 运行所有测试
+pytest
+
+# 运行测试并生成覆盖率报告
+pytest --cov=app --cov-report=html
+
+# 运行特定测试文件
+pytest tests/test_auth_service.py -v
+```
+
+### 测试数据库要求
+
+| 要求项 | 说明 |
+|--------|------|
+| **数据库类型** | PostgreSQL 15+ (与生产环境保持一致) |
+| **禁止使用** | SQLite、MySQL 等非PostgreSQL数据库 |
+| **测试数据库** | `relihub_test` (独立于开发/生产数据库) |
+| **隔离策略** | 每个测试用例使用事务回滚，确保数据隔离 |
+
+---
+
 ## ✅ 验证部署
 
 ### 1. 健康检查

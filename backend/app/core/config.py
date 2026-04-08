@@ -1,7 +1,8 @@
-from typing import List, Union, Optional
-from pydantic_settings import BaseSettings, SettingsConfigDict
 import secrets
-from pydantic import AnyHttpUrl, validator
+from typing import List, Union
+
+from pydantic import AnyHttpUrl, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -10,20 +11,18 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = secrets.token_urlsafe(32)
 
-    # JWT
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120  # 2 hours (per audit)
-    REFRESH_TOKEN_EXPIRE_DAYS: int = 7       # 7 days (per audit)
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     JWT_ALGORITHM: str = "HS256"
 
-    # Argon2id
     ARGON2_TIME_COST: int = 3
-    ARGON2_MEMORY_COST: int = 65536  # 64MB
+    ARGON2_MEMORY_COST: int = 65536
     ARGON2_PARALLELISM: int = 4
 
-    # CORS
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]

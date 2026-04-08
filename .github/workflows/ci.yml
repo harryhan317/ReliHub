@@ -1,0 +1,284 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop, 'sprint/**' ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.9'
+  POSTGRES_VERSION: '15'
+
+jobs:
+  lint:
+    name: Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black isort
+          
+      - name: Run Black
+        run: black --check backend/app backend/tests --diff
+        
+      - name: Run isort
+        run: isort --check-only backend/app backend/tests --diff
+        
+      - name: Run Flake8
+        run: flake8 backend/app backend/tests --max-line-length=100 --ignore=E501,W503
+
+  sqlite-check:
+    name: SQLite Usage Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for SQLite usage in tests
+        run: |
+          echo "Checking for SQLite usage in test files..."
+          
+          SQLITE_FILES=$(grep -r "sqlite" backend/tests --include="*.py" -l 2>/dev/null || true)
+          SQLITE_ENGINE=$(grep -r "create_engine.*sqlite" backend/tests --include="*.py" -l 2>/dev/null || true)
+          MEMORY_DB=$(grep -r ":memory:" backend/tests --include="*.py" -l 2>/dev/null || true)
+          
+          if [ ! -z "$SQLITE_ENGINE" ]; then
+            echo "::error::Found SQLite engine creation in test files:"
+            echo "$SQLITE_ENGINE"
+            echo ""
+            echo "All tests MUST use PostgreSQL. Please use shared fixtures from conftest.py"
+            exit 1
+          fi
+          
+          if [ ! -z "$MEMORY_DB" ]; then
+            echo "::warning::Found :memory: references in test files:"
+            echo "$MEMORY_DB"
+            echo ""
+            echo "Please verify these are not SQLite in-memory databases"
+          fi
+          
+          echo "✅ SQLite check passed - No SQLite engine creation found in tests"
+
+  test:
+    name: Test Suite (PostgreSQL)
+    runs-on: ubuntu-latest
+    needs: [lint, sqlite-check]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: relihub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+      
+      - name: Install dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov pytest-asyncio
+      
+      - name: Verify PostgreSQL connection
+        run: |
+          pip install psycopg2-binary
+          python -c "
+          import psycopg2
+          conn = psycopg2.connect(
+              host='localhost',
+              port=5432,
+              user='postgres',
+              password='postgres',
+              database='relihub_test'
+          )
+          print('✅ PostgreSQL connection successful')
+          conn.close()
+          "
+      
+      - name: Run database migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/relihub_test
+        run: |
+          alembic upgrade head
+      
+      - name: Run tests with PostgreSQL
+        working-directory: backend
+        env:
+          TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5432/relihub_test
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/relihub_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          pytest tests/ -v --tb=short --cov=app --cov-report=xml --cov-report=html
+      
+      - name: Upload coverage report
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.xml
+          fail_ci_if_error: false
+      
+      - name: Archive test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            backend/htmlcov/
+            backend/coverage.xml
+
+  fixture-validation:
+    name: Test Fixture Validation
+    runs-on: ubuntu-latest
+    needs: [test]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest
+      
+      - name: Validate fixture usage
+        run: |
+          python << 'EOF'
+          import os
+          import re
+          
+          def check_fixture_usage(test_file):
+              """Check if test file uses correct fixtures"""
+              issues = []
+              
+              with open(test_file, 'r') as f:
+                  content = f.read()
+                  
+              # Check for db_session fixture usage
+              if 'def test_' in content or 'async def test_' in content:
+                  if 'db_session' not in content and 'Session' in content:
+                      issues.append(f"Test may be missing db_session fixture")
+              
+              # Check for SQLite engine creation
+              if 'create_engine("sqlite' in content or "create_engine('sqlite" in content:
+                  issues.append(f"Found SQLite engine creation - MUST use PostgreSQL")
+              
+              return issues
+          
+          test_dir = 'backend/tests'
+          all_issues = []
+          
+          for root, dirs, files in os.walk(test_dir):
+              for file in files:
+                  if file.startswith('test_') and file.endswith('.py'):
+                      filepath = os.path.join(root, file)
+                      issues = check_fixture_usage(filepath)
+                      if issues:
+                          all_issues.append((filepath, issues))
+          
+          if all_issues:
+              print("⚠️ Fixture validation issues found:")
+              for filepath, issues in all_issues:
+                  print(f"\n{filepath}:")
+                  for issue in issues:
+                      print(f"  - {issue}")
+              print("\nPlease review and fix these issues.")
+          else:
+              print("✅ All test fixtures validated successfully")
+          EOF
+
+  security-check:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      
+      - name: Install safety
+        run: pip install safety
+      
+      - name: Check dependencies for vulnerabilities
+        working-directory: backend
+        run: safety check -r requirements.txt || true
+      
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for potential hardcoded secrets..."
+          
+          SECRETS=$(grep -rE "(password|secret|api_key|token)\s*=\s*[\"'][^\"']+[\"']" \
+            backend/app --include="*.py" | grep -v "test_" | grep -v "example" | grep -v "env" || true)
+          
+          if [ ! -z "$SECRETS" ]; then
+            echo "::warning::Potential hardcoded secrets found:"
+            echo "$SECRETS"
+          else
+            echo "✅ No hardcoded secrets found"
+          fi
+
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    needs: [test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker image
+        working-directory: backend
+        run: |
+          docker build -t relihub-backend:${{ github.sha }} .
+      
+      - name: Save Docker image
+        run: |
+          docker save relihub-backend:${{ github.sha }} | gzip > relihub-backend.tar.gz
+      
+      - name: Archive Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: relihub-backend.tar.gz

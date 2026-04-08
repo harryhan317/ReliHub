@@ -1,31 +1,30 @@
 """
 Service layer for Ledger/Economy module.
 """
-from typing import Optional, List, Tuple
-from datetime import datetime, timedelta
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
-from sqlalchemy.orm import selectinload
 import uuid
+from datetime import datetime, timedelta
+from typing import List, Optional, Tuple
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from app.models.ledger import (
-    PointLedger,
-    AttemptedTransaction,
     AssetPackage,
-    UserPurchasedAsset,
-    PointType,
+    AttemptedTransaction,
     OrderType,
+    PointLedger,
+    PointType,
+    UserPurchasedAsset,
 )
-from app.schemas.ledger import RechargeRequest, AssetPackagePurchaseRequest
 
 
 class PointLedgerService:
     """Service class for Point Ledger management"""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
-    async def create_ledger_entry(
+    def create_ledger_entry(
         self,
         user_id: str,
         amount: int,
@@ -55,26 +54,25 @@ class PointLedgerService:
         )
         
         self.db.add(entry)
-        await self.db.commit()
-        await self.db.refresh(entry)
+        self.db.commit()
+        self.db.refresh(entry)
         return entry
 
-    async def get_user_balance(
+    def get_user_balance(
         self,
         user_id: str
     ) -> Tuple[int, int]:
         """Get user's current balance (gold beans, bonus beans)"""
         query = select(PointLedger).where(
             PointLedger.user_id == user_id
-        ).order_by(PointLedger.created_at.desc())
+        ).order_by(PointLedger.created_at.desc(), PointLedger.id.desc())
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         ledgers = result.scalars().all()
         
         gold_beans = 0
         bonus_beans = 0
         
-        # Calculate balance from ledger (last entry for each type)
         for ledger in ledgers:
             if ledger.point_type == PointType.GOLD_BEAN:
                 if gold_beans == 0:
@@ -88,20 +86,18 @@ class PointLedgerService:
         
         return gold_beans, bonus_beans
 
-    async def get_ledger_history(
+    def get_ledger_history(
         self,
         user_id: str,
         page: int = 1,
         page_size: int = 20
     ) -> Tuple[List[PointLedger], int]:
         """Get user's ledger history with pagination"""
-        # Get total count
         count_query = select(func.count()).where(
             PointLedger.user_id == user_id
         )
-        total = (await self.db.execute(count_query)).scalar()
+        total = self.db.execute(count_query).scalar()
         
-        # Get paginated results
         query = (
             select(PointLedger)
             .where(PointLedger.user_id == user_id)
@@ -110,12 +106,12 @@ class PointLedgerService:
             .limit(page_size)
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         ledgers = result.scalars().all()
         
         return list(ledgers), total
 
-    async def record_attempted_transaction(
+    def record_attempted_transaction(
         self,
         user_id: str,
         order_type: OrderType,
@@ -132,11 +128,11 @@ class PointLedgerService:
         )
         
         self.db.add(attempt)
-        await self.db.commit()
-        await self.db.refresh(attempt)
+        self.db.commit()
+        self.db.refresh(attempt)
         return attempt
 
-    async def get_recent_attempts(
+    def get_recent_attempts(
         self,
         user_id: str,
         minutes: int = 5
@@ -149,17 +145,17 @@ class PointLedgerService:
             AttemptedTransaction.created_at >= cutoff_time
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return list(result.scalars().all())
 
 
 class AssetPackageService:
     """Service class for Asset Package management"""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
-    async def create_package(
+    def create_package(
         self,
         name: str,
         price_beans: int,
@@ -176,11 +172,11 @@ class AssetPackageService:
         )
         
         self.db.add(package)
-        await self.db.commit()
-        await self.db.refresh(package)
+        self.db.commit()
+        self.db.refresh(package)
         return package
 
-    async def get_package(
+    def get_package(
         self,
         package_id: str
     ) -> Optional[AssetPackage]:
@@ -188,16 +184,16 @@ class AssetPackageService:
         query = select(AssetPackage).where(
             AssetPackage.id == package_id
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def list_packages(self) -> List[AssetPackage]:
+    def list_packages(self) -> List[AssetPackage]:
         """List all available packages"""
         query = select(AssetPackage).order_by(AssetPackage.price_beans)
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return list(result.scalars().all())
 
-    async def purchase_package(
+    def purchase_package(
         self,
         user_id: str,
         package_id: str,
@@ -208,18 +204,18 @@ class AssetPackageService:
             id=str(uuid.uuid4()),
             user_id=user_id,
             package_id=package_id,
-            remaining_mb=0,  # Will be set when package is retrieved
+            remaining_mb=0,
             used_mb=0,
             expires_at=expires_at,
             is_active=True,
         )
         
         self.db.add(purchased)
-        await self.db.commit()
-        await self.db.refresh(purchased)
+        self.db.commit()
+        self.db.refresh(purchased)
         return purchased
 
-    async def get_user_assets(
+    def get_user_assets(
         self,
         user_id: str
     ) -> List[UserPurchasedAsset]:
@@ -229,16 +225,16 @@ class AssetPackageService:
             UserPurchasedAsset.is_active == True,
             UserPurchasedAsset.expires_at > datetime.utcnow()
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return list(result.scalars().all())
 
-    async def use_asset_quota(
+    def use_asset_quota(
         self,
         user_id: str,
         mb_amount: int
     ) -> bool:
         """Use asset quota from user's purchased packages"""
-        assets = await self.get_user_assets(user_id)
+        assets = self.get_user_assets(user_id)
         
         if not assets:
             return False
@@ -256,15 +252,15 @@ class AssetPackageService:
                 asset.remaining_mb = 0
         
         if remaining > 0:
-            return False  # Not enough quota
+            return False
         
-        await self.db.commit()
+        self.db.commit()
         return True
 
-    async def get_total_user_quota(
+    def get_total_user_quota(
         self,
         user_id: str
     ) -> int:
         """Get user's total remaining quota"""
-        assets = await self.get_user_assets(user_id)
+        assets = self.get_user_assets(user_id)
         return sum(asset.remaining_mb for asset in assets)

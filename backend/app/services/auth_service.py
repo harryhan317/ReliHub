@@ -5,24 +5,24 @@ Aligned with:
   - API_认证鉴权.md §2 (endpoints)
   - DB_users.md §1 (users table fields)
 """
-import uuid
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.exceptions import BusinessException, ErrorCode
 from app.core.security import (
-    hash_password,
-    verify_password,
-    needs_rehash,
     create_access_token,
     create_refresh_token,
     decode_token,
     generate_phone_blind_index,
+    hash_password,
+    needs_rehash,
+    verify_password,
 )
-from app.core.exceptions import BusinessException, ErrorCode
 from app.models.users import User
 from app.services.sms_service import verify_code
 

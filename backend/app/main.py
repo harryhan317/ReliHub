@@ -4,13 +4,13 @@ ReliHub MVP Backend – FastAPI application entry point.
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api import api_router
 from app.core.config import settings
 from app.core.exceptions import (
     BusinessException,
     business_exception_handler,
     generic_exception_handler,
 )
-from app.api import api_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

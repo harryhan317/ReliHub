@@ -1,0 +1,354 @@
+{
+  "version": "1.0",
+  "name": "ReliHub Design System - Phase 2B",
+  "created": "2026-04-05T14:00:00Z",
+  "description": "ReliHub 高保真设计系统 - 100+ 组件库 + 156+ 屏幕设计",
+  "metadata": {
+    "project": "ReliHub",
+    "phase": "2B",
+    "status": "Active",
+    "targetDate": "2026-04-28",
+    "components": 120,
+    "screens": 156,
+    "supportedPlatforms": ["Desktop", "Tablet", "Mobile"]
+  },
+  "designSystem": {
+    "colors": {
+      "primary": "#007AFF",
+      "primaryHover": "#0051D5",
+      "primaryActive": "#003DA6",
+      "primaryDisabled": "#CCCCCC",
+      "textPrimary": "#000000",
+      "textSecondary": "#666666",
+      "textTertiary": "#999999",
+      "bgPrimary": "#FFFFFF",
+      "bgSecondary": "#F5F5F5",
+      "bgTertiary": "#EEEEEE",
+      "border": "#E0E0E0",
+      "success": "#34C759",
+      "warning": "#FF9500",
+      "error": "#FF3B30",
+      "info": "#00C7BE",
+      "cocoa": "#8B4513",
+      "reputation": "#FFB81C",
+      "ai": "#A78BFA",
+      "community": "#3B82F6"
+    },
+    "typography": {
+      "fontFamily": "-apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif",
+      "fontMono": "'SF Mono', 'Monaco', 'Inconsolata', monospace",
+      "sizes": {
+        "xs": 13,
+        "sm": 15,
+        "base": 17,
+        "lg": 17,
+        "xl": 20,
+        "2xl": 22,
+        "3xl": 28,
+        "4xl": 34
+      },
+      "weights": {
+        "regular": 400,
+        "medium": 500,
+        "semibold": 600,
+        "bold": 700
+      },
+      "lineHeights": {
+        "tight": 1.2,
+        "normal": 1.5,
+        "relaxed": 1.625
+      }
+    },
+    "spacing": {
+      "1": 4,
+      "2": 8,
+      "3": 12,
+      "4": 16,
+      "5": 20,
+      "6": 24,
+      "8": 32
+    },
+    "borderRadius": {
+      "sm": 4,
+      "md": 8,
+      "lg": 12,
+      "xl": 16,
+      "full": 9999
+    },
+    "shadows": {
+      "sm": "0 1px 2px 0 rgba(0,0,0,0.05)",
+      "md": "0 4px 6px -1px rgba(0,0,0,0.1)",
+      "lg": "0 10px 15px -3px rgba(0,0,0,0.1)",
+      "xl": "0 20px 25px -5px rgba(0,0,0,0.1)"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": {
+        "states": ["default", "hover", "active", "disabled"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 3
+      },
+      "secondary": {
+        "states": ["default", "hover", "active", "disabled"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 3
+      },
+      "tertiary": {
+        "states": ["default", "hover", "active", "disabled"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 3
+      },
+      "icon": {
+        "states": ["default", "hover", "active"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 1
+      }
+    },
+    "inputs": {
+      "text": {
+        "states": ["default", "focus", "error", "disabled"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 1
+      },
+      "email": {
+        "states": ["default", "focus", "error"],
+        "sizes": ["md"],
+        "variants": 1
+      },
+      "password": {
+        "states": ["default", "focus", "error"],
+        "sizes": ["md"],
+        "variants": 1
+      },
+      "textarea": {
+        "states": ["default", "focus", "error"],
+        "sizes": ["md"],
+        "variants": 1
+      },
+      "select": {
+        "states": ["default", "open", "disabled"],
+        "sizes": ["sm", "md", "lg"],
+        "variants": 1
+      }
+    },
+    "cards": {
+      "basic": {
+        "variants": ["elevated", "outlined", "filled"],
+        "withImage": true,
+        "withAction": true
+      },
+      "resource": {
+        "variants": 1,
+        "withTags": true,
+        "withRating": true,
+        "withFavorite": true
+      },
+      "aiChat": {
+        "messageTypes": ["user", "assistant"],
+        "withActions": true
+      },
+      "notification": {
+        "types": ["success", "warning", "error", "info"],
+        "withCloseButton": true
+      }
+    },
+    "modals": {
+      "standard": {
+        "sizes": ["sm", "md", "lg"],
+        "withHeader": true,
+        "withFooter": true
+      },
+      "alert": {
+        "types": ["confirm", "warning", "error"],
+        "buttons": ["single", "double"]
+      },
+      "sheet": {
+        "positions": ["bottom", "right"],
+        "sizes": ["sm", "md", "lg"]
+      }
+    },
+    "navigation": {
+      "header": {
+        "variants": ["default", "sticky"],
+        "withSearch": true,
+        "withNotification": true,
+        "withUserMenu": true
+      },
+      "sidebar": {
+        "collapsed": true,
+        "expanded": true,
+        "withLogo": true,
+        "menuLevels": 2
+      },
+      "tabs": {
+        "variants": ["underline", "pill"],
+        "scrollable": true,
+        "icons": true
+      },
+      "breadcrumb": {
+        "maxLevels": 5,
+        "withIcon": true
+      }
+    },
+    "lists": {
+      "standard": {
+        "withCheckbox": true,
+        "withAvatar": true,
+        "withAction": true,
+        "virtualized": true
+      },
+      "table": {
+        "sortable": true,
+        "filterable": true,
+        "paginated": true,
+        "withSelection": true
+      }
+    },
+    "forms": {
+      "checkbox": {
+        "states": ["unchecked", "checked", "indeterminate", "disabled"]
+      },
+      "radio": {
+        "states": ["unchecked", "checked", "disabled"]
+      },
+      "toggle": {
+        "states": ["off", "on", "disabled"]
+      },
+      "label": {
+        "required": true,
+        "optional": true,
+        "withHelper": true
+      }
+    },
+    "badges": {
+      "standard": {
+        "colors": ["primary", "success", "warning", "error", "info"],
+        "sizes": ["sm", "md", "lg"],
+        "withIcon": true,
+        "withDot": true
+      },
+      "avatar": {
+        "sizes": ["xs", "sm", "md", "lg", "xl"],
+        "withBorder": true,
+        "withStatus": true
+      }
+    },
+    "progress": {
+      "bar": {
+        "colors": ["primary", "success", "warning", "error"],
+        "sizes": ["sm", "md", "lg"],
+        "withLabel": true,
+        "withPercent": true
+      },
+      "circular": {
+        "sizes": ["sm", "md", "lg"],
+        "colors": ["primary", "success", "warning", "error"],
+        "withLabel": true
+      },
+      "skeleton": {
+        "types": ["text", "circle", "rectangle"],
+        "animated": true
+      }
+    },
+    "overlays": {
+      "tooltip": {
+        "positions": ["top", "bottom", "left", "right"],
+        "withArrow": true
+      },
+      "popover": {
+        "positions": ["top", "bottom", "left", "right"],
+        "dismissible": true
+      },
+      "dropdown": {
+        "alignments": ["left", "center", "right"],
+        "withSearch": true
+      }
+    }
+  },
+  "screens": {
+    "auth": {
+      "login": "登录页面",
+      "register": "注册页面",
+      "forgot_password": "忘记密码",
+      "reset_password": "重置密码",
+      "verify_email": "邮箱验证",
+      "verify_phone": "手机验证"
+    },
+    "onboarding": {
+      "welcome": "欢迎页",
+      "tutorial_1": "教程 1",
+      "tutorial_2": "教程 2",
+      "tutorial_3": "教程 3",
+      "permissions": "权限申请",
+      "setup_profile": "设置资料"
+    },
+    "home": {
+      "home_feed": "首页动态",
+      "home_empty": "首页空状态",
+      "notifications_center": "通知中心",
+      "search_results": "搜索结果",
+      "search_filters": "搜索筛选"
+    },
+    "resources": {
+      "resources_list": "资源列表",
+      "resources_grid": "资源网格",
+      "resource_detail": "资源详情",
+      "resource_reviews": "资源评论",
+      "create_resource": "创建资源",
+      "edit_resource": "编辑资源"
+    },
+    "ai_assistant": {
+      "ai_chat": "AI 对话",
+      "ai_history": "历史记录",
+      "ai_settings": "AI 设置",
+      "ai_suggestions": "建议列表",
+      "ai_empty": "AI 空状态"
+    },
+    "community": {
+      "community_list": "社区列表",
+      "community_detail": "社区详情",
+      "discussion_list": "讨论列表",
+      "discussion_detail": "讨论详情",
+      "create_discussion": "创建讨论",
+      "members_list": "成员列表"
+    },
+    "my_profile": {
+      "profile_view": "个人资料",
+      "profile_edit": "编辑资料",
+      "my_resources": "我的资源",
+      "my_likes": "我的收藏",
+      "reputation_details": "信誉详情",
+      "settings": "设置"
+    },
+    "cocoa_ledger": {
+      "ledger_list": "可可豆账单",
+      "ledger_detail": "账单详情",
+      "exchange": "兑换",
+      "exchange_history": "兑换历史",
+      "shop": "商城"
+    },
+    "admin": {
+      "dashboard": "管理后台",
+      "users_management": "用户管理",
+      "content_moderation": "内容审核",
+      "reports": "举报管理",
+      "system_settings": "系统设置",
+      "analytics": "数据分析"
+    }
+  },
+  "breakpoints": {
+    "mobile": { "min": 320, "max": 480 },
+    "tablet": { "min": 481, "max": 1024 },
+    "desktop": { "min": 1025, "max": 1920 }
+  },
+  "deliverables": {
+    "phase2b": {
+      "components": 120,
+      "screens": 156,
+      "pages": 12,
+      "totalFrames": 500,
+      "estimatedSize": "2.5GB"
+    }
+  }
+}

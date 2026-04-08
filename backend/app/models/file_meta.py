@@ -1,13 +1,14 @@
 """
 File Meta ORM model – fully aligned with DB_文件元数据.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Index, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import JSONB
+import enum
+from datetime import datetime
+from typing import List
+
+from sqlalchemy import DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from typing import Optional, List
-import enum
+
 from . import Base
 
 
@@ -72,7 +73,11 @@ class FileUsage(Base):
     # ── Identity ──────────────────────────────────────────────────────────────
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
     # ── File Reference ────────────────────────────────────────────────────────
-    file_uuid: Mapped[str] = mapped_column(String(36), index=True)  # FK -> file_meta.file_uuid
+    file_uuid: Mapped[str] = mapped_column(
+        String(36), 
+        ForeignKey("file_meta.file_uuid", ondelete="CASCADE"),
+        index=True
+    )  # FK -> file_meta.file_uuid
     target_id: Mapped[str] = mapped_column(String(36), index=True)  # Reference target (Conversation/Resource/Topic ID)
     target_type: Mapped[str] = mapped_column(String(50))  # Target type: CONVERSATION/RESOURCE/TOPIC
     user_id: Mapped[str] = mapped_column(String(36))  # Current referencing user ID
