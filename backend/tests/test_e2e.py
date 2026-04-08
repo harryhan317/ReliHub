@@ -65,6 +65,52 @@ class TestUserAuthenticationFlow:
         assert refresh_data["access_token"] != access_token
 
 
+class TestAuthenticationErrorCases:
+    """Test authentication error scenarios"""
+
+    def test_login_with_invalid_credentials(self, client):
+        """Test login with invalid credentials"""
+        response = client.post(
+            "/api/v1/auth/login",
+            json={
+                "phone": "13900000000",
+                "password": "wrongpassword"
+            }
+        )
+        
+        assert response.status_code == 400
+        data = response.json()
+        assert data["code"] == "AUTH_4003"
+
+    def test_access_protected_endpoint_without_token(self, client):
+        """Test accessing protected endpoint without token"""
+        response = client.get("/api/v1/users/me")
+        
+        assert response.status_code == 422
+
+    def test_access_protected_endpoint_with_invalid_token(self, client):
+        """Test accessing protected endpoint with invalid token"""
+        response = client.get(
+            "/api/v1/users/me",
+            headers={"Authorization": "Bearer invalid_token"}
+        )
+        
+        assert response.status_code == 401
+        data = response.json()
+        assert data["code"] == "AUTH_4000"
+
+    def test_refresh_with_invalid_token(self, client):
+        """Test refresh with invalid token"""
+        response = client.post(
+            "/api/v1/auth/refresh",
+            json={"refresh_token": "invalid_refresh_token"}
+        )
+        
+        assert response.status_code == 400
+        data = response.json()
+        assert data["code"] == "AUTH_4005"
+
+
 class TestHealthCheckFlow:
     """Test health check and monitoring flow"""
 

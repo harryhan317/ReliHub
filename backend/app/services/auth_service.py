@@ -23,6 +23,7 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
+from jose import JWTError
 from app.models.users import User
 from app.services.sms_service import verify_code
 
@@ -231,7 +232,11 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[str, str]:
     Issue a new access+refresh token pair from a valid refresh token.
     API_认证鉴权.md §2.4.
     """
-    payload = decode_token(refresh_token)
+    try:
+        payload = decode_token(refresh_token)
+    except JWTError:
+        raise BusinessException(ErrorCode.AUTH_4005, "Refresh Token 已失效，请重新登录")
+    
     if payload is None or payload.get("type") != "refresh":
         raise BusinessException(ErrorCode.AUTH_4005, "Refresh Token 已失效，请重新登录")
 
