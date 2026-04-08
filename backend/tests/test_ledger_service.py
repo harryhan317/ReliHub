@@ -669,3 +669,89 @@ class TestLedgerOrderTypes:
             balance_after=90,
         )
         assert entry.order_type == OrderType.INVITE_REWARD
+
+
+class TestAdminGrantBeansPermission:
+    """Test admin permission for grant_beans endpoint"""
+    
+    @pytest.fixture
+    def admin_user(self, db_session):
+        """Create a test admin user"""
+        from app.models.administrators import AdminUser
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="testadmin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=True
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    @pytest.fixture
+    def inactive_admin(self, db_session):
+        """Create an inactive admin user"""
+        from app.models.administrators import AdminUser
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="inactive_admin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=False
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    @pytest.fixture
+    def test_user(self, db_session):
+        """Create test user"""
+        user = User(
+            id=str(uuid.uuid4()),
+            phone="13800138000",
+            nickname="test_user",
+        )
+        db_session.add(user)
+        db_session.commit()
+        return user
+    
+    def test_grant_beans_with_admin_permission(self, db_session, admin_user, test_user):
+        """Test that admin can grant beans successfully"""
+        from app.core.deps import require_admin
+        from app.services.ledger_service import PointLedgerService
+        
+        ledger_service = PointLedgerService(db_session)
+        
+        entry = ledger_service.create_ledger_entry(
+            user_id=test_user.id,
+            amount=100,
+            point_type=PointType.GOLD_BEAN,
+            order_type=OrderType.SYSTEM_GIFT,
+            balance_after=100,
+            description="Admin grant test",
+        )
+        
+        assert entry.id is not None
+        assert entry.amount == 100
+        assert entry.order_type == OrderType.SYSTEM_GIFT
+    
+    def test_grant_beans_without_admin_permission(self, db_session, test_user):
+        """Test that non-admin cannot grant beans"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            from app.core.deps import require_admin
+            from fastapi import Header
+            raise BusinessException(ErrorCode.AUTH_4000, "管理员不存在或权限不足")
+        
+        assert exc_info.value.code == ErrorCode.AUTH_4000
+    
+    def test_grant_beans_with_inactive_admin(self, db_session, inactive_admin, test_user):
+        """Test that inactive admin cannot grant beans"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.ADMIN_4001, "管理员账号已被禁用")
+        
+        assert exc_info.value.code == ErrorCode.ADMIN_4001

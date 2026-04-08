@@ -468,3 +468,114 @@ class TestPasswordHashing:
         assert hash1 != hash2
         assert verify_password(password, hash1) == True
         assert verify_password(password, hash2) == True
+
+
+class TestTokenBlacklistRedisMigration:
+    """Test token blacklist Redis migration"""
+    
+    def test_blacklist_token_with_redis(self, monkeypatch):
+        """Test blacklisting token with Redis available"""
+        from app.core.redis_client import redis_client
+        from app.services import auth_service
+        
+        jti = str(uuid.uuid4())
+        
+        auth_service.blacklist_token(jti)
+        
+        assert auth_service.is_token_blacklisted(jti) == True
+    
+    def test_blacklist_token_fallback_to_memory(self, monkeypatch):
+        """Test blacklisting token falls back to memory when Redis unavailable"""
+        from app.core.redis_client import redis_client
+        from app.services import auth_service
+        
+        original_available = redis_client._is_available
+        redis_client._is_available = False
+        
+        try:
+            jti = str(uuid.uuid4())
+            
+            auth_service.blacklist_token(jti)
+            
+            assert auth_service.is_token_blacklisted(jti) == True
+        finally:
+            redis_client._is_available = original_available
+    
+    def test_is_token_blacklisted_false_initially(self):
+        """Test that token is not blacklisted initially"""
+        from app.services import auth_service
+        
+        jti = str(uuid.uuid4())
+        
+        assert auth_service.is_token_blacklisted(jti) == False
+    
+    def test_multiple_tokens_blacklist(self):
+        """Test blacklisting multiple tokens"""
+        from app.services import auth_service
+        
+        jti1 = str(uuid.uuid4())
+        jti2 = str(uuid.uuid4())
+        jti3 = str(uuid.uuid4())
+        
+        auth_service.blacklist_token(jti1)
+        auth_service.blacklist_token(jti2)
+        
+        assert auth_service.is_token_blacklisted(jti1) == True
+        assert auth_service.is_token_blacklisted(jti2) == True
+        assert auth_service.is_token_blacklisted(jti3) == False
+    
+    def test_logout_blacklists_token(self, db_session, monkeypatch):
+        """Test that logout blacklists the token"""
+        from app.services import auth_service
+        
+        def mock_verify_code(phone, code):
+            return True
+        
+        monkeypatch.setattr("app.services.auth_service.verify_code", mock_verify_code)
+        
+        user, _ = auth_service.register_by_phone(
+            db=db_session,
+            phone="13800138000",
+            code="123456",
+            password=None,
+            agreed_to_terms=True,
+        )
+        
+        access_token = create_access_token(user.id)
+        payload = decode_token(access_token)
+        jti = payload.get("jti")
+        
+        assert auth_service.is_token_blacklisted(jti) == False
+        
+        auth_service.logout(access_token)
+        
+        assert auth_service.is_token_blacklisted(jti) == True
+    
+    def test_refresh_token_blacklist_old_token(self, db_session, monkeypatch):
+        """Test that refresh token blacklists old token"""
+        from app.services import auth_service
+        
+        def mock_verify_code(phone, code):
+            return True
+        
+        monkeypatch.setattr("app.services.auth_service.verify_code", mock_verify_code)
+        
+        user, _ = auth_service.register_by_phone(
+            db=db_session,
+            phone="13800138001",
+            code="123456",
+            password=None,
+            agreed_to_terms=True,
+        )
+        
+        refresh_token = create_refresh_token(user.id)
+        payload = decode_token(refresh_token)
+        old_jti = payload.get("jti")
+        
+        assert auth_service.is_token_blacklisted(old_jti) == False
+        
+        new_access, new_refresh = auth_service.refresh_access_token(db_session, refresh_token)
+        
+        assert auth_service.is_token_blacklisted(old_jti) == True
+        assert new_access is not None
+        assert new_refresh is not None

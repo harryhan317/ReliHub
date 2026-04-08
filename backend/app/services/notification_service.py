@@ -146,22 +146,37 @@ class NotificationService:
         exclude_user_ids: Optional[List[str]] = None
     ) -> int:
         """Broadcast notification to all users"""
-        notification = Notification(
-            id=str(uuid.uuid4()),
-            receiver_id="BROADCAST",
-            sender_id=None,
-            type=request.type,
-            priority=request.priority,
-            is_broadcast_exemption=True,
-            title=request.title,
-            content=request.content,
-            link_url=request.link_url,
-        )
+        from app.models.users import User
         
-        self.db.add(notification)
-        self.db.commit()
+        exclude_user_ids = exclude_user_ids or []
         
-        return 1
+        query = select(User.id)
+        if exclude_user_ids:
+            query = query.where(User.id.notin_(exclude_user_ids))
+        
+        result = self.db.execute(query)
+        user_ids = [row[0] for row in result.all()]
+        
+        notifications = []
+        for user_id in user_ids:
+            notification = Notification(
+                id=str(uuid.uuid4()),
+                receiver_id=user_id,
+                sender_id=None,
+                type=request.type,
+                priority=request.priority,
+                is_broadcast_exemption=False,
+                title=request.title,
+                content=request.content,
+                link_url=request.link_url,
+            )
+            notifications.append(notification)
+        
+        if notifications:
+            self.db.add_all(notifications)
+            self.db.commit()
+        
+        return len(notifications)
 
     def get_notification(
         self,

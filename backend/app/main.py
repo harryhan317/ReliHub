@@ -1,8 +1,9 @@
 """
 ReliHub MVP Backend – FastAPI application entry point.
 """
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from app.api import api_router
 from app.core.config import settings
@@ -11,6 +12,8 @@ from app.core.exceptions import (
     business_exception_handler,
     generic_exception_handler,
 )
+from app.core.health_check import health_checker
+from app.core.monitoring import metrics_collector
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -19,11 +22,9 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# ── Exception Handlers ────────────────────────────────────────────────────────
 app.add_exception_handler(BusinessException, business_exception_handler)
 app.add_exception_handler(Exception, generic_exception_handler)
 
-# ── CORS ──────────────────────────────────────────────────────────────────────
 if settings.BACKEND_CORS_ORIGINS:
     app.add_middleware(
         CORSMiddleware,
@@ -33,10 +34,45 @@ if settings.BACKEND_CORS_ORIGINS:
         allow_headers=["*"],
     )
 
-# ── Routes ────────────────────────────────────────────────────────────────────
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/api/v1/health", tags=["系统"])
 def health_check():
-    return {"status": "ok", "message": "ReliHub backend is running"}
+    """Quick health check endpoint"""
+    return health_checker.perform_quick_check()
+
+
+@app.get("/api/v1/health/detailed", tags=["系统"])
+def detailed_health_check():
+    """Detailed health check with all components"""
+    result = health_checker.perform_full_check()
+    
+    if result["status"] != "healthy":
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail=result)
+    
+    return result
+
+
+@app.get("/api/v1/metrics", tags=["系统"])
+def metrics():
+    """Prometheus metrics endpoint"""
+    metrics_collector.set_application_info(
+        version="1.0.0",
+        environment=getattr(settings, 'ENVIRONMENT', 'development')
+    )
+    
+    return Response(
+        content=generate_latest(),
+        media_type=CONTENT_TYPE_LATEST
+    )
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Application startup tasks"""
+    metrics_collector.set_application_info(
+        version="1.0.0",
+        environment=getattr(settings, 'ENVIRONMENT', 'development')
+    )

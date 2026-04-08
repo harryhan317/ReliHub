@@ -6,7 +6,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, get_db
+from app.core.deps import get_current_user, get_db, require_admin
+from app.models.administrators import AdminUser
 from app.models.users import User
 from app.schemas.notification import (
     BroadcastRequest,
@@ -140,17 +141,15 @@ def delete_notification(
 def create_notification(
     request: CreateNotificationRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: AdminUser = Depends(require_admin),
 ):
     """
     Create a notification for a user (admin only).
-    
-    TODO: Add admin permission check
     """
     service = NotificationService(db)
     notification = service.create_notification(
         request,
-        sender_id=current_user.id,
+        sender_id=admin.id,
     )
     
     return NotificationResponse.model_validate(notification)
@@ -160,21 +159,65 @@ def create_notification(
 def broadcast_notification(
     request: BroadcastRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: AdminUser = Depends(require_admin),
 ):
     """
     Broadcast notification to all users (admin only).
     
-    TODO: Add admin permission check
-    TODO: Implement fan-out to all users
+    Uses Celery task for async processing to support large user bases.
     """
-    service = NotificationService(db)
-    count = service.broadcast(
-        request,
-        request.exclude_user_ids,
+    from app.tasks.celery_worker import broadcast_notification_task
+    
+    task = broadcast_notification_task.delay(
+        notification_type=request.type.value,
+        title=request.title,
+        content=request.content,
+        priority=request.priority.value if request.priority else "NORMAL",
+        link_url=request.link_url,
+        exclude_user_ids=request.exclude_user_ids,
     )
     
     return {
-        "message": "Broadcast created",
-        "notification_count": count,
+        "message": "Broadcast task started",
+        "task_id": task.id,
+        "status": "PENDING",
     }
+
+
+@router.get("/admin/broadcast/status/{task_id}")
+def get_broadcast_status(
+    task_id: str,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(require_admin),
+):
+    """
+    Get broadcast task status (admin only).
+    """
+    from app.tasks.celery_worker import broadcast_notification_task
+    
+    task = broadcast_notification_task.AsyncResult(task_id)
+    
+    if task.state == 'PENDING':
+        response = {
+            'state': task.state,
+            'status': 'Task is waiting to be processed'
+        }
+    elif task.state == 'PROGRESS':
+        response = {
+            'state': task.state,
+            'current': task.info.get('current', 0),
+            'total': task.info.get('total', 1),
+            'status': task.info.get('status', '')
+        }
+    elif task.state == 'SUCCESS':
+        response = {
+            'state': task.state,
+            'result': task.info
+        }
+    else:
+        response = {
+            'state': task.state,
+            'status': str(task.info)
+        }
+    
+    return response

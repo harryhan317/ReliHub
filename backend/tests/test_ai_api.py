@@ -235,7 +235,7 @@ class TestHealthEndpoint:
         
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "ok"
+        assert data["status"] in ["ok", "healthy"]
 
 
 if __name__ == "__main__":

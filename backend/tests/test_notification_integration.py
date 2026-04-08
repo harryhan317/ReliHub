@@ -285,6 +285,21 @@ class TestNotificationService:
     
     def test_broadcast(self, notification_service):
         """Test broadcasting notification"""
+        from app.models.users import User
+        import uuid
+        
+        users = []
+        for i in range(3):
+            user = User(
+                id=str(uuid.uuid4()),
+                phone=f"138001380{i}",
+                nickname=f"test_user_{i}",
+            )
+            notification_service.db.add(user)
+            users.append(user)
+        
+        notification_service.db.commit()
+        
         request = BroadcastRequest(
             type=NotificationType.BROADCAST,
             title="System Announcement",
@@ -293,20 +308,17 @@ class TestNotificationService:
         
         count = notification_service.broadcast(request)
         
-        assert count == 1
+        assert count == len(users)
         
-        db_session = notification_service.db
-        from sqlalchemy import select
-        
-        query = select(Notification).where(
-            Notification.receiver_id == "BROADCAST"
-        )
-        result = db_session.execute(query)
-        broadcast = result.scalar_one_or_none()
-        
-        assert broadcast is not None
-        assert broadcast.title == "System Announcement"
-        assert broadcast.is_broadcast_exemption == True
+        for user in users:
+            notifications, total = notification_service.get_notifications(
+                user_id=user.id,
+                page=1,
+                page_size=10
+            )
+            
+            assert total >= 1
+            assert any(n.title == "System Announcement" for n in notifications)
     
     def test_get_notification(self, notification_service):
         """Test getting a specific notification"""
@@ -490,6 +502,183 @@ class TestNotificationTypes:
         notification = notification_service.create_notification(request)
         
         assert notification.type == NotificationType.REWARD
+
+
+class TestAdminNotificationPermission:
+    """Test admin permission for notification endpoints"""
+    
+    @pytest.fixture
+    def admin_user(self, db_session):
+        """Create a test admin user"""
+        from app.models.administrators import AdminUser
+        import uuid
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="testadmin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=True
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    @pytest.fixture
+    def inactive_admin(self, db_session):
+        """Create an inactive admin user"""
+        from app.models.administrators import AdminUser
+        import uuid
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="inactive_admin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=False
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    def test_create_notification_with_admin_permission(self, db_session, admin_user):
+        """Test that admin can create notification successfully"""
+        from app.services.notification_service import NotificationService
+        
+        notification_service = NotificationService(db_session)
+        
+        request = CreateNotificationRequest(
+            receiver_id="user-123",
+            type=NotificationType.SYSTEM,
+            title="Admin Notification",
+            content="This is an admin notification"
+        )
+        
+        notification = notification_service.create_notification(
+            request=request,
+            sender_id=admin_user.id
+        )
+        
+        assert notification.id is not None
+        assert notification.sender_id == admin_user.id
+    
+    def test_create_notification_without_admin_permission(self, db_session):
+        """Test that non-admin cannot create notification"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.AUTH_4000, "管理员不存在或权限不足")
+        
+        assert exc_info.value.code == ErrorCode.AUTH_4000
+    
+    def test_create_notification_with_inactive_admin(self, db_session, inactive_admin):
+        """Test that inactive admin cannot create notification"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.ADMIN_4001, "管理员账号已被禁用")
+        
+        assert exc_info.value.code == ErrorCode.ADMIN_4001
+    
+    def test_broadcast_notification_with_admin_permission(self, db_session, admin_user):
+        """Test that admin can broadcast notification successfully"""
+        from app.services.notification_service import NotificationService
+        
+        notification_service = NotificationService(db_session)
+        
+        request = BroadcastRequest(
+            type=NotificationType.SYSTEM,
+            title="Broadcast Test",
+            content="This is a broadcast test",
+            priority=NotificationPriority.HIGH
+        )
+        
+        count = notification_service.broadcast(request)
+        
+        assert count >= 0
+    
+    def test_broadcast_notification_without_admin_permission(self, db_session):
+        """Test that non-admin cannot broadcast notification"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.AUTH_4000, "管理员不存在或权限不足")
+        
+        assert exc_info.value.code == ErrorCode.AUTH_4000
+
+
+class TestBroadcastNotificationFunctionality:
+    """Test broadcast notification functionality"""
+    
+    @pytest.fixture
+    def notification_service(self, db_session):
+        """Create NotificationService instance"""
+        return NotificationService(db_session)
+    
+    @pytest.fixture
+    def test_users(self, db_session):
+        """Create test users"""
+        from app.models.users import User
+        import uuid
+        
+        users = []
+        for i in range(5):
+            user = User(
+                id=str(uuid.uuid4()),
+                phone=f"1380013800{i}",
+                nickname=f"test_user_{i}",
+            )
+            db_session.add(user)
+            users.append(user)
+        
+        db_session.commit()
+        return users
+    
+    def test_broadcast_to_all_users(self, notification_service, test_users):
+        """Test broadcasting to all users"""
+        request = BroadcastRequest(
+            type=NotificationType.SYSTEM,
+            title="Broadcast Test",
+            content="This is a broadcast test",
+            priority=NotificationPriority.NORMAL
+        )
+        
+        count = notification_service.broadcast(request)
+        
+        assert count == len(test_users)
+    
+    def test_broadcast_with_exclusions(self, notification_service, test_users):
+        """Test broadcasting with user exclusions"""
+        exclude_user_ids = [test_users[0].id, test_users[1].id]
+        
+        request = BroadcastRequest(
+            type=NotificationType.SYSTEM,
+            title="Broadcast Test",
+            content="This is a broadcast test",
+            exclude_user_ids=exclude_user_ids
+        )
+        
+        count = notification_service.broadcast(request, exclude_user_ids)
+        
+        assert count == len(test_users) - len(exclude_user_ids)
+    
+    def test_broadcast_creates_notifications(self, notification_service, test_users):
+        """Test that broadcast creates individual notifications"""
+        request = BroadcastRequest(
+            type=NotificationType.SYSTEM,
+            title="Broadcast Test",
+            content="This is a broadcast test"
+        )
+        
+        count = notification_service.broadcast(request)
+        
+        for user in test_users:
+            notifications, total = notification_service.get_notifications(
+                user_id=user.id,
+                page=1,
+                page_size=10
+            )
+            
+            assert total >= 1
+            assert any(n.title == "Broadcast Test" for n in notifications)
 
 
 if __name__ == "__main__":

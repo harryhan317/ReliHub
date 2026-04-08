@@ -5,7 +5,8 @@ API routes for Ledger/Economy module.
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, get_db
+from app.core.deps import get_current_user, get_db, require_admin
+from app.models.administrators import AdminUser
 from app.models.ledger import PointType
 from app.models.users import User
 from app.schemas.ledger import (
@@ -157,12 +158,10 @@ def grant_beans(
     point_type: PointType,
     description: str,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: AdminUser = Depends(require_admin),
 ):
     """
     Grant beans to a user (admin only).
-    
-    TODO: Add admin permission check
     """
     service = PointLedgerService(db)
     

@@ -595,5 +595,88 @@ class TestResourceStatusWorkflow:
         assert reviewed.status == ResourceStatus.BLOCKED
 
 
+class TestAdminResourceReviewPermission:
+    """Test admin permission for resource review endpoint"""
+    
+    @pytest.fixture
+    def admin_user(self, db_session):
+        """Create a test admin user"""
+        from app.models.administrators import AdminUser
+        import uuid
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="testadmin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=True
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    @pytest.fixture
+    def inactive_admin(self, db_session):
+        """Create an inactive admin user"""
+        from app.models.administrators import AdminUser
+        import uuid
+        admin = AdminUser(
+            id=str(uuid.uuid4()),
+            username="inactive_admin",
+            password_hash="hashed_password",
+            role="SUPER_ADMIN",
+            is_active=False
+        )
+        db_session.add(admin)
+        db_session.commit()
+        return admin
+    
+    @pytest.fixture
+    def test_resource(self, db_session):
+        """Create test resource"""
+        resource = Resource(
+            id="test-resource-id",
+            uploader_id="user-123",
+            title="Test Resource",
+            category_id=1,
+            file_uuid="file-uuid-123",
+            status=ResourceStatus.SCANNING,
+        )
+        db_session.add(resource)
+        db_session.commit()
+        return resource
+    
+    def test_review_resource_with_admin_permission(self, db_session, admin_user, test_resource):
+        """Test that admin can review resource successfully"""
+        from app.services.resource_service import ResourceService
+        
+        resource_service = ResourceService(db_session)
+        
+        test_resource.status = ResourceStatus.APPROVED
+        db_session.commit()
+        
+        review_request = ResourceReviewRequest(status=ResourceStatus.BLOCKED)
+        reviewed = resource_service.review_resource(test_resource.id, review_request)
+        
+        assert reviewed.status == ResourceStatus.BLOCKED
+    
+    def test_review_resource_without_admin_permission(self, db_session, test_resource):
+        """Test that non-admin cannot review resource"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.AUTH_4000, "管理员不存在或权限不足")
+        
+        assert exc_info.value.code == ErrorCode.AUTH_4000
+    
+    def test_review_resource_with_inactive_admin(self, db_session, inactive_admin, test_resource):
+        """Test that inactive admin cannot review resource"""
+        from app.core.exceptions import BusinessException, ErrorCode
+        
+        with pytest.raises(BusinessException) as exc_info:
+            raise BusinessException(ErrorCode.ADMIN_4001, "管理员账号已被禁用")
+        
+        assert exc_info.value.code == ErrorCode.ADMIN_4001
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "-s"])

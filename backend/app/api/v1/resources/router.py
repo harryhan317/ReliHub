@@ -6,7 +6,8 @@ from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_current_user, get_db
+from app.core.deps import get_current_user, get_db, require_admin
+from app.models.administrators import AdminUser
 from app.models.users import User
 from app.schemas.resource import (
     ResourceCreateRequest,
@@ -141,12 +142,10 @@ def review_resource(
     resource_id: str,
     request: ResourceReviewRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    admin: AdminUser = Depends(require_admin),
 ):
     """
     Review a resource (admin only).
-    
-    TODO: Add admin permission check
     """
     service = ResourceService(db)
     resource = service.review_resource(resource_id, request)
