@@ -14,13 +14,13 @@ Database: PostgreSQL (uses shared fixtures from conftest.py)
 
 import pytest
 
-from app.services.resource_service import ResourceService
 from app.models.resources import Resource, ResourcePreview, ResourceStatus
 from app.schemas.resource import (
     ResourceCreateRequest,
-    ResourceUpdateRequest,
     ResourceReviewRequest,
+    ResourceUpdateRequest,
 )
+from app.services.resource_service import ResourceService
 
 
 class TestResourceService:
@@ -225,7 +225,6 @@ class TestResourceService:
     
     def test_list_resources_sorting(self, resource_service):
         """Test listing resources with different sort options"""
-        import time
         
         for i in range(3):
             request = ResourceCreateRequest(
@@ -601,8 +600,9 @@ class TestAdminResourceReviewPermission:
     @pytest.fixture
     def admin_user(self, db_session):
         """Create a test admin user"""
-        from app.models.administrators import AdminUser
         import uuid
+
+        from app.models.administrators import AdminUser
         admin = AdminUser(
             id=str(uuid.uuid4()),
             username="testadmin",
@@ -617,8 +617,9 @@ class TestAdminResourceReviewPermission:
     @pytest.fixture
     def inactive_admin(self, db_session):
         """Create an inactive admin user"""
-        from app.models.administrators import AdminUser
         import uuid
+
+        from app.models.administrators import AdminUser
         admin = AdminUser(
             id=str(uuid.uuid4()),
             username="inactive_admin",

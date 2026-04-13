@@ -11,18 +11,17 @@ Tests:
 5. Authentication and authorization
 """
 
-import pytest
 import uuid
-from unittest.mock import MagicMock, patch
+
+import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.models.users import User
-from app.models.ai_session import AISession
-from app.models.ai_message import AIMessage
-from app.models.llm_provider import LLMProvider
-from app.core.security import hash_password, generate_phone_blind_index
+from app.core.security import generate_phone_blind_index, hash_password
 from app.db.session import get_db as original_get_db
+from app.main import app
+from app.models.ai_session import AISession
+from app.models.llm_provider import LLMProvider
+from app.models.users import User
 
 
 @pytest.fixture

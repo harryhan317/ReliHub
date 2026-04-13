@@ -51,11 +51,20 @@ class FeedbackReplyRequest(BaseModel):
     reply: str = Field(..., min_length=1, max_length=2000, description="Reply content")
 
 
+import re
+
+
 class SystemConfigUpdateRequest(BaseModel):
     """Request schema for updating system config"""
     config_key: str = Field(..., min_length=1, max_length=100)
-    config_value: str = Field(..., min_length=1)
+    config_value: str = Field(..., min_length=1, max_length=5000)
     description: Optional[str] = Field(None, max_length=500)
+    
+    def validate_config_key(self) -> str:
+        """Validate config_key format"""
+        if not re.match(r'^[a-zA-Z0-9_]+$', self.config_key):
+            raise ValueError('配置键只能包含字母、数字和下划线')
+        return self.config_key
 
 
 class AssetPackageUpdateRequest(BaseModel):
@@ -181,11 +190,14 @@ class SystemConfigListResponse(BaseModel):
 class FeedbackResponse(BaseModel):
     """Response schema for feedback"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str
     user_id: str
+    type: str
     content: str
     status: str
+    images: Optional[List[str]] = None
+    contact: Optional[str] = None
     reply: Optional[str] = None
     replied_by: Optional[str] = None
     created_at: datetime

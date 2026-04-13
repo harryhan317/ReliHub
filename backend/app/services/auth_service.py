@@ -10,6 +10,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -23,7 +24,6 @@ from app.core.security import (
     needs_rehash,
     verify_password,
 )
-from jose import JWTError
 from app.models.users import User
 from app.services.sms_service import verify_code
 
@@ -32,7 +32,6 @@ logger = logging.getLogger(__name__)
 # ── Token blacklist with Redis fallback ───────────────────────────────────────
 # Production: Redis SET + TTL matching token expiry.
 # Fallback: In-memory set when Redis is unavailable.
-from app.core.config import settings
 from app.core.redis_client import redis_client
 
 _memory_blacklist: set[str] = set()

@@ -11,15 +11,16 @@ Tests:
 Database: PostgreSQL (uses shared fixtures from conftest.py)
 """
 
-import pytest
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
+import pytest
+
+from app.models.llm_provider import LLMProvider
 from app.services.ai_service import AIService
+from app.services.llm_provider.deepseek_provider import DeepSeekProvider
 from app.services.llm_provider.factory import ProviderFactory
 from app.services.llm_provider.openai_provider import OpenAIProvider
-from app.services.llm_provider.deepseek_provider import DeepSeekProvider
-from app.models.llm_provider import LLMProvider
 
 
 class TestProviderFactory:

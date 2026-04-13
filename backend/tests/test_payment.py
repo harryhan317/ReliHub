@@ -4,18 +4,18 @@ Tests for Payment module
 Uses PostgreSQL test database via conftest.py fixtures.
 """
 
-import pytest
 import uuid
-from unittest.mock import patch, MagicMock
-from sqlalchemy.orm import Session
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
+from unittest.mock import MagicMock
 
+import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+
+from app.core.security import generate_phone_blind_index, hash_password
+from app.models.payment import PaymentMethod, PaymentStatus
+from app.models.users import User
 from app.services.payment_service import PaymentService
 from app.services.wechat_pay import WeChatPayService
-from app.models.payment import PaymentOrder, PaymentStatus, PaymentMethod, UserBalance
-from app.models.users import User
-from app.core.security import hash_password, generate_phone_blind_index
 
 
 def generate_test_rsa_key():

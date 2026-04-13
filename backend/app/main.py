@@ -1,9 +1,10 @@
 """
 ReliHub MVP Backend – FastAPI application entry point.
 """
+import os
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.api import api_router
 from app.core.config import settings
@@ -13,7 +14,12 @@ from app.core.exceptions import (
     generic_exception_handler,
 )
 from app.core.health_check import health_checker
+from app.core.logging_config import setup_logging
 from app.core.monitoring import metrics_collector
+
+# 初始化日志配置
+environment = os.getenv("ENVIRONMENT", "development")
+setup_logging(environment)
 
 app = FastAPI(
     title=settings.PROJECT_NAME,

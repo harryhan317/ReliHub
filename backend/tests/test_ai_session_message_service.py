@@ -13,9 +13,9 @@ Database: PostgreSQL (uses shared fixtures from conftest.py)
 
 import pytest
 
-from app.services.ai_service import AISessionService, AIMessageService
-from app.models.ai_session import AISession
 from app.models.ai_message import AIMessage
+from app.models.ai_session import AISession
+from app.services.ai_service import AIMessageService, AISessionService
 
 
 class TestAISessionService:

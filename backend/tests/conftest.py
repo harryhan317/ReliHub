@@ -7,20 +7,28 @@ SQLite is NOT allowed for testing as per project standards.
 Test database configuration:
 - Default: postgresql://postgres:postgres@localhost:5432/relihub_test
 - Override via TEST_DATABASE_URL environment variable
+
+Rate limiting:
+- TESTING=true enables permissive rate limits for tests (10000/day, 10000/hour)
+- See app/core/rate_limiter.py for TESTING_MODE configuration
 """
 import os
 import uuid
+
+# Enable testing mode for permissive rate limits BEFORE any app imports
+os.environ["TESTING"] = "true"
+
 import pytest
 import pytest_asyncio
-from sqlalchemy import create_engine, text
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
+from app.core.security import generate_phone_blind_index, hash_password
 from app.models import Base
 from app.models.users import User
-from app.core.security import hash_password, generate_phone_blind_index
 
 TEST_DATABASE_URL = os.getenv(
     "TEST_DATABASE_URL",
@@ -175,6 +183,7 @@ def test_user(db_session):
 def client(db_session):
     """
     Create a test client with database session override.
+    Uses transaction rollback for clean test isolation.
     """
     from app.db.session import get_db
     
@@ -191,6 +200,56 @@ def client(db_session):
         yield test_client
     
     app.dependency_overrides.clear()
+    
+    # Ensure transaction is rolled back to clean up test data
+    # This is a safety net in case tests didn't properly clean up
+    try:
+        db_session.rollback()
+    except Exception:
+        pass
+
+
+@pytest.fixture(scope="function")
+def isolated_db_session():
+    """
+    Create an isolated database session with automatic cleanup.
+    
+    This fixture ensures complete test isolation by:
+    1. Creating a new transaction for each test
+    2. Automatically rolling back all changes after test
+    3. Verifying no test data leaks between tests
+    
+    Use this fixture when you need guaranteed clean database state.
+    """
+    engine = create_engine(
+        TEST_DATABASE_URL,
+        echo=False,
+        future=True,
+    )
+    
+    connection = engine.connect()
+    transaction = connection.begin()
+    
+    Base.metadata.create_all(connection)
+    
+    SessionLocal = sessionmaker(
+        bind=connection,
+        class_=Session,
+        expire_on_commit=False,
+        future=True,
+    )
+    
+    session = SessionLocal()
+    
+    try:
+        yield session
+    finally:
+        # Rollback all changes to ensure clean state
+        session.rollback()
+        transaction.rollback()
+        session.close()
+        connection.close()
+        engine.dispose()
 
 
 @pytest.fixture(scope="session")

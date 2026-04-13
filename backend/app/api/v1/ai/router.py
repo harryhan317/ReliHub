@@ -88,7 +88,7 @@ def get_session(
     session = service.get_session(session_id, user_id)
     
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     return session
 
@@ -105,15 +105,15 @@ def delete_session(
     user_id = current_user.id if current_user else None
     
     if not user_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="未授权")
     
     service = AISessionService(db)
     success = service.delete_session(session_id, user_id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
-    return {"message": "Session deleted successfully"}
+    return {"message": "会话已删除"}
 
 
 @router.get("/sessions/{session_id}/messages", response_model=MessageListResponse)
@@ -132,7 +132,7 @@ def list_messages(
     
     session = session_service.get_session(session_id, user_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     message_service = AIMessageService(db)
     messages, total = message_service.list_messages(session_id, page, page_size)
@@ -163,7 +163,7 @@ def create_message(
     
     session = session_service.get_session(session_id, user_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     message_service = AIMessageService(db)
     ai_service = AIService(db)
@@ -295,7 +295,7 @@ def add_feedback(
 
     message = message_service.get_message(message_id)
     if not message or message.session_id != session_id:
-        raise HTTPException(status_code=404, detail="Message not found")
+        raise HTTPException(status_code=404, detail="消息不存在")
 
     message_service.add_feedback(
         message_id=message_id,

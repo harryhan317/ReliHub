@@ -22,6 +22,7 @@ from .admin import (
 from .ai import router as ai_router
 from .auth import router as auth_router
 from .community import router as community_router
+from .feedback import router as feedback_router
 from .files import router as files_router
 from .ledger import router as ledger_router
 from .notification import router as notification_router
@@ -39,6 +40,7 @@ api_router.include_router(resources_router, prefix="/resources")
 # Sprint B routers
 api_router.include_router(ai_router, prefix="/ai")
 api_router.include_router(community_router, prefix="/community")
+api_router.include_router(feedback_router, prefix="/feedback")
 api_router.include_router(ledger_router, prefix="/ledger")
 api_router.include_router(notification_router, prefix="/notifications")
 api_router.include_router(files_router, prefix="/files")

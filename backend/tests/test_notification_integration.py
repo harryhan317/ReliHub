@@ -13,12 +13,12 @@ Database: PostgreSQL (uses shared fixtures from conftest.py)
 
 import pytest
 
-from app.services.notification_service import NotificationService
-from app.models.notification import Notification, NotificationType, NotificationPriority
+from app.models.notification import Notification, NotificationPriority, NotificationType
 from app.schemas.notification import (
-    CreateNotificationRequest,
     BroadcastRequest,
+    CreateNotificationRequest,
 )
+from app.services.notification_service import NotificationService
 
 
 class TestNotificationService:
@@ -285,8 +285,9 @@ class TestNotificationService:
     
     def test_broadcast(self, notification_service):
         """Test broadcasting notification"""
-        from app.models.users import User
         import uuid
+
+        from app.models.users import User
         
         users = []
         for i in range(3):
@@ -510,8 +511,9 @@ class TestAdminNotificationPermission:
     @pytest.fixture
     def admin_user(self, db_session):
         """Create a test admin user"""
-        from app.models.administrators import AdminUser
         import uuid
+
+        from app.models.administrators import AdminUser
         admin = AdminUser(
             id=str(uuid.uuid4()),
             username="testadmin",
@@ -526,8 +528,9 @@ class TestAdminNotificationPermission:
     @pytest.fixture
     def inactive_admin(self, db_session):
         """Create an inactive admin user"""
-        from app.models.administrators import AdminUser
         import uuid
+
+        from app.models.administrators import AdminUser
         admin = AdminUser(
             id=str(uuid.uuid4()),
             username="inactive_admin",
@@ -616,8 +619,9 @@ class TestBroadcastNotificationFunctionality:
     @pytest.fixture
     def test_users(self, db_session):
         """Create test users"""
-        from app.models.users import User
         import uuid
+
+        from app.models.users import User
         
         users = []
         for i in range(5):

@@ -1,7 +1,18 @@
-# 🚀 本地开发环境快速启动指南
+# 🚀 ReliHub 后端开发与部署指南
 
-> **适用环境**: macOS 本地开发  
-> **前提条件**: Python 3.9+, PostgreSQL 14+, Redis（可选）
+> **适用环境**: macOS 本地开发 / 测试环境部署
+> **前提条件**: Python 3.9+, PostgreSQL 14+, Redis（可选）, Docker（可选）
+
+---
+
+## 📋 文档目录
+
+1. [快速启动步骤](#快速启动步骤) - 本地开发环境快速启动
+2. [Docker 部署](#docker-部署可选) - 使用 Docker 部署数据库
+3. [测试环境配置](#测试环境配置) - 测试环境配置与运行
+4. [验证部署](#验证部署) - 部署后验证
+5. [常见问题](#常见问题) - FAQ 与故障排除
+6. [部署验证清单](#部署验证清单) - 部署完成检查项
 
 ---
 
@@ -91,16 +102,66 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ```bash
 cd backend
-chmod +x start_local.sh
-./start_local.sh
+chmod +x deploy.sh
+./deploy.sh
 ```
 
-脚本会自动：
-1. ✅ 检查环境
-2. ✅ 创建数据库（如不存在）
-3. ✅ 安装依赖
-4. ✅ 执行迁移
-5. ✅ 启动应用
+脚本会自动执行以下步骤：
+1. ✅ 环境检查（Python、pip）
+2. ✅ 虚拟环境检查/创建
+3. ✅ 依赖安装
+4. ✅ 环境配置检查（.env）
+5. ✅ 数据库连接验证
+6. ✅ 数据库迁移
+7. ✅ 启动应用
+
+**启动后访问地址**:
+- API 文档：http://localhost:8000/docs
+- 健康检查：http://localhost:8000/health
+
+---
+
+## 🚀 生产环境部署
+
+### 生产环境检查清单
+
+- [ ] Python 3.9+
+- [ ] Docker 20.10+ (如使用容器部署)
+- [ ] Docker Compose 2.0+ (如使用容器部署)
+- [ ] PostgreSQL 客户端工具（可选）
+
+### 生产环境部署步骤
+
+1. **配置环境变量**
+```bash
+cp .env.example .env
+# 编辑 .env 配置生产环境参数
+```
+
+2. **生成 SECRET_KEY**
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+3. **使用 Docker 部署**
+```bash
+docker-compose up -d db redis
+docker-compose ps
+```
+
+4. **执行数据库迁移**
+```bash
+alembic upgrade head
+```
+
+5. **启动应用**
+```bash
+# 开发模式
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 生产模式（推荐）
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+```
 
 ---
 
@@ -154,6 +215,48 @@ pytest tests/test_auth_service.py -v
 
 ---
 
+## 🐳 Docker 部署（可选）
+
+如果使用 Docker 部署 PostgreSQL 和 Redis，可以使用以下方式：
+
+### 启动数据库和 Redis
+
+```bash
+# 使用 Docker Compose 启动
+docker-compose up -d db redis
+
+# 检查容器状态
+docker-compose ps
+
+# 查看日志（如有问题）
+docker-compose logs db
+docker-compose logs redis
+```
+
+**预期输出**:
+```
+NAME                STATUS
+backend_db_1        Up
+backend_redis_1     Up
+```
+
+### 验证 Docker 部署
+
+```bash
+# 连接数据库
+psql -h localhost -U postgres -d relihub
+
+# 查看表数量
+SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';
+
+# 退出
+\q
+```
+
+**预期结果**: 12+ 个表
+
+---
+
 ## ✅ 验证部署
 
 ### 1. 健康检查
@@ -180,6 +283,24 @@ psql -h localhost -U postgres -d relihub -c "SELECT COUNT(*) FROM information_sc
 ```bash
 # 获取资源列表
 curl http://localhost:8000/api/v1/resources/
+```
+
+### 4. API 端点验证
+
+```bash
+# 测试 Swagger UI
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/docs
+# 预期: 200
+
+# 测试 OpenAPI 文档
+curl -s -o /dev/null -w "%{http_code}" http://localhost:8000/api/v1/openapi.json
+# 预期: 200
+
+# 测试用户注册 API
+curl -X POST http://localhost:8000/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"phone":"13800138000","password":"Test123456","verification_code":"888888"}'
+# 预期: 返回包含 code 字段的 JSON 响应
 ```
 
 ---

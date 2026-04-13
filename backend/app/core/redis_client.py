@@ -261,6 +261,20 @@ class RedisClient:
         result = self._execute_with_retry(self._client.expire, key, seconds)
         return result is not None and result
 
+    def setex(self, key: str, seconds: int, value: str) -> bool:
+        """Set key-value pair with expiration"""
+        if not self._client:
+            return False
+        result = self._execute_with_retry(self._client.setex, key, seconds, value)
+        return result is not None and result
+
+    def keys(self, pattern: str) -> list:
+        """Get all keys matching pattern"""
+        if not self._client:
+            return []
+        result = self._execute_with_retry(self._client.keys, pattern)
+        return result if result is not None else []
+
     def force_reconnect(self) -> bool:
         """
         Force a reconnection attempt.

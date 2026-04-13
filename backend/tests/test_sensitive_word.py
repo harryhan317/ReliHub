@@ -3,6 +3,7 @@ Tests for AC Automaton sensitive word filtering algorithm.
 """
 
 import pytest
+
 from app.services.ac_automaton import ACAutomaton, SensitiveWordFilter
 
 

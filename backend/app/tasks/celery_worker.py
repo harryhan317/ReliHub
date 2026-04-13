@@ -45,11 +45,16 @@ def broadcast_notification_task(
     import time
     import uuid
     from datetime import datetime
-    
-    from sqlalchemy import select, func
+
+    from sqlalchemy import func, select
+
     from app.core.database import SessionLocal
+    from app.models.notification import (
+        Notification,
+        NotificationPriority,
+        NotificationType,
+    )
     from app.models.users import User
-    from app.models.notification import Notification, NotificationType, NotificationPriority
     
     start_time = time.time()
     db = SessionLocal()
@@ -174,10 +179,13 @@ def send_notification_to_user(
         dict: Task result
     """
     import uuid
-    from datetime import datetime
-    
+
     from app.core.database import SessionLocal
-    from app.models.notification import Notification, NotificationType, NotificationPriority
+    from app.models.notification import (
+        Notification,
+        NotificationPriority,
+        NotificationType,
+    )
     
     db = SessionLocal()
     
@@ -203,7 +211,7 @@ def send_notification_to_user(
             'user_id': user_id
         }
     
-    except Exception as e:
+    except Exception:
         db.rollback()
         raise
     

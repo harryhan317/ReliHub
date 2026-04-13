@@ -8,10 +8,8 @@ Tests:
 """
 import uuid
 
-import pytest
-
+from app.core.security import generate_phone_blind_index, hash_password
 from app.models.users import User
-from app.core.security import hash_password, generate_phone_blind_index
 
 
 class TestUserAuthenticationFlow:

@@ -104,7 +104,7 @@ def get_payment_order(
     )
     
     if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=404, detail="订单不存在")
     
     return order
 
@@ -130,7 +130,7 @@ def create_wechat_jsapi_payment(
             user_id=current_user.id
         )
         if not order:
-            raise HTTPException(status_code=404, detail="Order not found")
+            raise HTTPException(status_code=404, detail="订单不存在")
     else:
         order = payment_service.create_payment_order(
             user_id=current_user.id,
@@ -185,7 +185,7 @@ def create_wechat_native_payment(
             user_id=current_user.id
         )
         if not order:
-            raise HTTPException(status_code=404, detail="Order not found")
+            raise HTTPException(status_code=404, detail="订单不存在")
     else:
         order = payment_service.create_payment_order(
             user_id=current_user.id,
@@ -302,7 +302,7 @@ def recharge_balance(
     This is a test endpoint. In production, use WeChat Pay.
     """
     if amount <= 0:
-        raise HTTPException(status_code=400, detail="Amount must be positive")
+        raise HTTPException(status_code=400, detail="充值金额必须大于 0")
     
     service = PaymentService(db)
     
@@ -323,7 +323,7 @@ def recharge_balance(
     )
     
     return {
-        "message": "Recharge successful",
+        "message": "充值成功",
         "order_no": order.order_no,
         "amount": amount
     }

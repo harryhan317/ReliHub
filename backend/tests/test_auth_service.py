@@ -475,7 +475,6 @@ class TestTokenBlacklistRedisMigration:
     
     def test_blacklist_token_with_redis(self, monkeypatch):
         """Test blacklisting token with Redis available"""
-        from app.core.redis_client import redis_client
         from app.services import auth_service
         
         jti = str(uuid.uuid4())

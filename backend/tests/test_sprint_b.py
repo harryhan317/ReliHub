@@ -4,14 +4,15 @@ Tests endpoints that work with synchronous database sessions.
 
 Uses PostgreSQL test database via conftest.py fixtures.
 """
-import pytest
 import uuid
 
+import pytest
 from fastapi.testclient import TestClient
+
+from app.core.security import generate_phone_blind_index, hash_password
+from app.db.session import get_db as original_get_db
 from app.main import app
 from app.models.users import User
-from app.core.security import hash_password, generate_phone_blind_index
-from app.db.session import get_db as original_get_db
 
 
 @pytest.fixture

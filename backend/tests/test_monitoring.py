@@ -7,8 +7,8 @@ Tests:
 3. Performance monitoring
 4. Alert configuration
 """
+
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 class TestHealthCheck:
@@ -222,8 +222,9 @@ class TestHealthChecker:
 
     def test_uptime_increases(self):
         """Test that uptime increases over time"""
-        from app.core.health_check import HealthChecker
         import time
+
+        from app.core.health_check import HealthChecker
         
         checker = HealthChecker()
         uptime1 = checker.get_uptime()

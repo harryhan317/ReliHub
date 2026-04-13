@@ -48,6 +48,7 @@ from .sensitive_word import SensitiveWord, SensitiveWordLog
 from .system_config import SystemConfig
 from .topic import BountyStatus, Post, Topic, TopicStatus
 from .users import User
+from .search_history import SearchHistory
 
 __all__ = [
     "Base",

@@ -12,10 +12,10 @@ import uuid
 
 import pytest
 
+from app.models.notification import Notification, NotificationPriority, NotificationType
 from app.models.users import User
-from app.models.notification import Notification, NotificationType, NotificationPriority
-from app.services.notification_service import NotificationService
 from app.schemas.notification import BroadcastRequest
+from app.services.notification_service import NotificationService
 
 
 class TestBroadcastPerformance:
@@ -196,6 +196,7 @@ class TestBroadcastMemoryEfficiency:
     def test_paginated_processing(self, db_session):
         """Test that broadcast uses paginated processing"""
         from sqlalchemy import select
+
         from app.models.users import User
         
         batch_size = 100
@@ -229,7 +230,6 @@ class TestBroadcastMemoryEfficiency:
         """Test bulk insert is more efficient than individual inserts"""
         import uuid
         from datetime import datetime
-        from app.models.notification import Notification
         
         num_notifications = 100
         

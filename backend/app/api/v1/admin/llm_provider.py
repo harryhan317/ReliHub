@@ -65,7 +65,7 @@ def get_llm_provider(
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"LLM Provider {provider_id} not found"
+            detail=f"LLM 提供商 {provider_id} 不存在"
         )
     
     return provider
@@ -124,7 +124,7 @@ def update_llm_provider(
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"LLM Provider {provider_id} not found"
+            detail=f"LLM 提供商 {provider_id} 不存在"
         )
     
     update_data = provider_data.model_dump(exclude_unset=True)
@@ -153,7 +153,7 @@ def delete_llm_provider(
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"LLM Provider {provider_id} not found"
+            detail=f"LLM 提供商 {provider_id} 不存在"
         )
     
     db.delete(provider)
@@ -178,7 +178,7 @@ def toggle_llm_provider(
     if not provider:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"LLM Provider {provider_id} not found"
+            detail=f"LLM 提供商 {provider_id} 不存在"
         )
     
     provider.enabled = not provider.enabled

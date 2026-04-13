@@ -3,22 +3,17 @@ Unit tests for AdminService.
 
 Uses PostgreSQL test database via conftest.py fixtures.
 """
-import hashlib
-import json
 import uuid
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import BusinessException, ErrorCode
-from app.models.administrators import AdminAuditLog, AdminUser
+from app.models.administrators import AdminUser
 from app.models.feedback import Feedback, FeedbackStatus
 from app.models.ledger import AssetPackage
 from app.models.resources import Resource, ResourceStatus
-from app.models.system_config import SystemConfig
-from app.models.topic import Post, Topic, TopicStatus
+from app.models.topic import Topic, TopicStatus
 from app.models.users import User
 from app.schemas.admin import (
     AssetPackageUpdateRequest,

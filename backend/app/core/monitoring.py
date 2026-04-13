@@ -7,10 +7,11 @@ Features:
 - Performance monitoring
 - Alert configuration
 """
-from prometheus_client import Counter, Histogram, Gauge, Info
 import time
 from functools import wraps
-from typing import Callable, Any
+from typing import Any, Callable
+
+from prometheus_client import Counter, Gauge, Histogram, Info
 
 REQUEST_COUNT = Counter(
     'http_requests_total',

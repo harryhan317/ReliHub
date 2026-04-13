@@ -403,6 +403,35 @@ class AdminService:
     ) -> SystemConfig:
         self.check_permission(["SUPER_ADMIN"])
         
+        # Validate config_key format
+        try:
+            request.validate_config_key()
+        except ValueError as e:
+            raise BusinessException(
+                ErrorCode.ADMIN_4002,
+                str(e)
+            )
+        
+        # Validate config_key against whitelist
+        allowed_keys = [
+            "site_name",
+            "site_description",
+            "max_upload_size",
+            "feature_flags",
+            "maintenance_mode",
+            "registration_enabled",
+            "email_verification_required",
+            "search_cache_ttl",
+            "trending_search_limit",
+            "sensitive_words_enabled",
+        ]
+        
+        if request.config_key not in allowed_keys:
+            raise BusinessException(
+                ErrorCode.ADMIN_4002,
+                f"配置项 {request.config_key} 不在允许列表中。允许的配置项：{', '.join(allowed_keys)}"
+            )
+        
         config = self.get_system_config(request.config_key)
         
         if config:

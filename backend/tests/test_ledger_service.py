@@ -21,12 +21,9 @@ from datetime import datetime, timedelta
 import pytest
 
 from app.models.ledger import (
-    AssetPackage,
     AttemptedTransaction,
     OrderType,
-    PointLedger,
     PointType,
-    UserPurchasedAsset,
 )
 from app.models.users import User
 from app.services.ledger_service import AssetPackageService, PointLedgerService
@@ -718,7 +715,6 @@ class TestAdminGrantBeansPermission:
     
     def test_grant_beans_with_admin_permission(self, db_session, admin_user, test_user):
         """Test that admin can grant beans successfully"""
-        from app.core.deps import require_admin
         from app.services.ledger_service import PointLedgerService
         
         ledger_service = PointLedgerService(db_session)
@@ -741,8 +737,6 @@ class TestAdminGrantBeansPermission:
         from app.core.exceptions import BusinessException, ErrorCode
         
         with pytest.raises(BusinessException) as exc_info:
-            from app.core.deps import require_admin
-            from fastapi import Header
             raise BusinessException(ErrorCode.AUTH_4000, "管理员不存在或权限不足")
         
         assert exc_info.value.code == ErrorCode.AUTH_4000

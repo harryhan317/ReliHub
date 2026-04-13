@@ -7,13 +7,13 @@ Uses PostgreSQL test database via conftest.py fixtures.
 import pytest
 from sqlalchemy import select
 
-from app.services.sensitive_word_service import SensitiveWordService
 from app.models.sensitive_word import (
     SensitiveWord,
-    SensitiveWordLog,
     SensitiveWordCategory,
-    SensitiveWordLevel
+    SensitiveWordLevel,
+    SensitiveWordLog,
 )
+from app.services.sensitive_word_service import SensitiveWordService
 
 
 class TestSensitiveWordService:

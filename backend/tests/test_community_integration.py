@@ -13,14 +13,14 @@ Database: PostgreSQL (uses shared fixtures from conftest.py)
 
 import pytest
 
-from app.services.community_service import TopicService, PostService
-from app.models.topic import Topic, Post, TopicStatus, BountyStatus
+from app.models.topic import BountyStatus, Post, Topic, TopicStatus
 from app.models.users import User
 from app.schemas.community import (
+    PostCreateRequest,
     TopicCreateRequest,
     TopicUpdateRequest,
-    PostCreateRequest,
 )
+from app.services.community_service import PostService, TopicService
 
 
 def create_test_user(db_session, user_id: str, username: str = "testuser") -> User:

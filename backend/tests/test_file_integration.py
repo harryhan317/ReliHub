@@ -28,24 +28,15 @@ Database: PostgreSQL (uses shared fixtures from conftest.py)
 
 import hashlib
 import uuid
-from io import BytesIO
 
 import pytest
-from fastapi import UploadFile
 
 from app.models.file_meta import (
-    FileMeta,
     FileStatus,
-    FileUsage,
     LifecycleStatus,
     TargetType,
 )
 from app.models.users import User
-from app.schemas.file import (
-    FileMetaResponse,
-    FileUploadResponse,
-    FileListResponse,
-)
 from app.services.file_service import FileService
 
 

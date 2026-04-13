@@ -63,6 +63,10 @@ class ErrorCode(str, Enum):
     COM_4005 = "COM_4005"  # 连续等幂冲按捕捉到的重复点赞干预
     COM_4007 = "COM_4007"  # 针对已经被打上最佳标识的话题重发悬赏令
 
+    # Feedback (反馈模块)
+    FEEDBACK_4003 = "FEEDBACK_4003"  # 无效的状态值
+    FEEDBACK_4041 = "FEEDBACK_4041"  # 反馈不存在或无权访问
+
     # System (§2.6) - 系统底层网关
     SYS_4290 = "SYS_4290"  # 应用层规则独立计数的阻击防刷限流
     SYS_5000 = "SYS_5000"  # 主线逻辑代码越界引发的逻辑性抛错
@@ -132,6 +136,8 @@ _HTTP_STATUS_MAP = {
     ErrorCode.ADMIN_4007: 404,
     ErrorCode.ADMIN_4008: 404,
     ErrorCode.ADMIN_4009: 404,
+    ErrorCode.FEEDBACK_4003: 400,
+    ErrorCode.FEEDBACK_4041: 404,
 }
 
 
@@ -186,6 +192,8 @@ _ERROR_MESSAGES = {
     ErrorCode.ADMIN_4007: "反馈不存在",
     ErrorCode.ADMIN_4008: "配置项不存在",
     ErrorCode.ADMIN_4009: "扩容包不存在",
+    ErrorCode.FEEDBACK_4003: "无效的状态值",
+    ErrorCode.FEEDBACK_4041: "反馈不存在或无权访问",
 }
 
 

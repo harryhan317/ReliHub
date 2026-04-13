@@ -9,11 +9,9 @@ Tests:
 5. Thread safety
 """
 import time
-import uuid
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
 from redis.exceptions import RedisError
 
 from app.core.redis_client import RedisClient

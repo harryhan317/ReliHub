@@ -2,12 +2,13 @@
 Tests for Claude and Moonshot Providers
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 
 from app.services.llm_provider.claude_provider import ClaudeProvider
-from app.services.llm_provider.moonshot_provider import MoonshotProvider
 from app.services.llm_provider.factory import ProviderFactory
+from app.services.llm_provider.moonshot_provider import MoonshotProvider
 
 
 # Test Claude Provider

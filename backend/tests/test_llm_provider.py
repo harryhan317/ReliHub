@@ -3,7 +3,7 @@ Tests for LLM Provider module.
 """
 
 import pytest
-from app.services.llm_provider.base import LLMProvider
+
 from app.services.llm_provider.deepseek_provider import DeepSeekProvider
 
 
@@ -56,7 +56,7 @@ class TestDeepSeekProviderSync:
     
     def test_chat_completion_stream(self, provider):
         """Test streaming chat completion"""
-        from unittest.mock import patch, MagicMock
+        from unittest.mock import MagicMock, patch
         
         messages = [{"role": "user", "content": "Hello"}]
         
@@ -85,8 +85,7 @@ class TestDeepSeekProviderSync:
     
     def test_chat_completion_non_stream(self, provider):
         """Test non-streaming chat completion"""
-        from unittest.mock import patch, MagicMock
-        import json
+        from unittest.mock import MagicMock, patch
         
         messages = [{"role": "user", "content": "Hello"}]
         

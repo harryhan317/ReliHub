@@ -75,3 +75,8 @@ class User(Base):
         back_populates="user",
         foreign_keys="BalanceTransaction.user_id"
     )
+    search_histories = relationship(
+        "SearchHistory",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )

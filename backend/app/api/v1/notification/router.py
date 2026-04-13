@@ -68,7 +68,7 @@ def get_notification(
     )
     
     if not notification:
-        raise HTTPException(status_code=404, detail="Notification not found")
+        raise HTTPException(status_code=404, detail="通知不存在")
     
     return notification
 
@@ -132,7 +132,7 @@ def delete_notification(
     )
     
     if not success:
-        raise HTTPException(status_code=404, detail="Notification not found")
+        raise HTTPException(status_code=404, detail="通知不存在")
     
     return {"message": "Notification deleted"}
 

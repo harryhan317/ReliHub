@@ -3,7 +3,7 @@ API routes for Resource Management module.
 """
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 
 from app.core.deps import get_current_user, get_db, require_admin
@@ -17,6 +17,7 @@ from app.schemas.resource import (
     ResourceReviewRequest,
     ResourceUpdateRequest,
 )
+from app.services.admin_service import AdminService
 from app.services.resource_service import ResourceService
 
 router = APIRouter(tags=["资源管理"])
@@ -71,7 +72,7 @@ def get_resource(
     resource = service.get_resource(resource_id)
     
     if not resource:
-        raise HTTPException(status_code=404, detail="Resource not found")
+        raise HTTPException(status_code=404, detail="资源不存在")
     
     return resource
 
@@ -92,7 +93,7 @@ def update_resource(
     )
     
     if not resource:
-        raise HTTPException(status_code=404, detail="Resource not found")
+        raise HTTPException(status_code=404, detail="资源不存在")
     
     return resource
 
@@ -108,7 +109,7 @@ def delete_resource(
     success = service.delete_resource(resource_id, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Resource not found")
+        raise HTTPException(status_code=404, detail="资源不存在")
     
     return {"message": "Resource deleted successfully"}
 
@@ -132,26 +133,41 @@ def download_resource(
     resource = service.get_resource(resource_id)
     
     if not resource:
-        raise HTTPException(status_code=404, detail="Resource not found")
+        raise HTTPException(status_code=404, detail="资源不存在")
     
     return {"message": "Download initiated", "resource_id": resource_id}
 
 
-@router.post("/{resource_id}/review")
+@router.post("/{resource_id}/review", response_model=ResourceResponse)
 def review_resource(
     resource_id: str,
     request: ResourceReviewRequest,
+    http_request: Request,
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(require_admin),
 ):
     """
     Review a resource (admin only).
     """
-    service = ResourceService(db)
-    resource = service.review_resource(resource_id, request)
+    from app.models.resources import ResourceStatus
+    
+    service = AdminService(db, admin)
+    ip_address = http_request.client.host if http_request.client else None
+    
+    if request.status == ResourceStatus.APPROVED:
+        resource = service.approve_resource(resource_id, request, ip_address=ip_address)
+    elif request.status == ResourceStatus.REJECTED:
+        resource = service.reject_resource(resource_id, request, ip_address=ip_address)
+    elif request.status == ResourceStatus.BLOCKED:
+        resource = service.block_resource(resource_id, request, ip_address=ip_address)
+    else:
+        # Generic fallback or throw exception
+        from app.services.resource_service import ResourceService
+        res_service = ResourceService(db)
+        resource = res_service.review_resource(resource_id, request)
     
     if not resource:
-        raise HTTPException(status_code=404, detail="Resource not found")
+        raise HTTPException(status_code=404, detail="资源不存在")
     
     return resource
 

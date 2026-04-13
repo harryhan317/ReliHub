@@ -116,7 +116,7 @@ def purchase_package(
     package = service.get_package(request.package_id)
     
     if not package:
-        raise HTTPException(status_code=404, detail="Package not found")
+        raise HTTPException(status_code=404, detail="套餐不存在")
     
     return {
         "message": "Package purchased",

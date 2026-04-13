@@ -11,18 +11,19 @@ Tests:
 5. Cost calculation and billing
 """
 
-import pytest
 import os
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
-from app.services.ai_service import AIService, AISessionService, AIMessageService
+import pytest
+
+from app.models.ai_message import AIMessage
+from app.models.ai_session import AISession
+from app.models.llm_provider import LLMProvider
+from app.services.ai_service import AIMessageService, AIService, AISessionService
+from app.services.llm_provider.deepseek_provider import DeepSeekProvider
 from app.services.llm_provider.factory import ProviderFactory
 from app.services.llm_provider.openai_provider import OpenAIProvider
-from app.services.llm_provider.deepseek_provider import DeepSeekProvider
-from app.models.llm_provider import LLMProvider
-from app.models.ai_session import AISession
-from app.models.ai_message import AIMessage
 
 
 @pytest.fixture

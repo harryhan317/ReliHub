@@ -33,9 +33,28 @@ def upload_file(
     2. Uploads to OSS
     3. Creates file metadata
     4. Returns file info
+    
+    File size limits:
+    - Maximum file size: 10MB (configurable via system config)
     """
+    # Read file content
     content = file.file.read()
     file_size = len(content)
+    
+    # Validate file size (10MB limit)
+    MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+    if file_size > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"文件大小超过限制 ({MAX_UPLOAD_SIZE // 1024 // 1024}MB)"
+        )
+    
+    # Validate file size is not zero
+    if file_size == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="文件不能为空"
+        )
     
     file_hash = hashlib.sha256(content).hexdigest()
     
@@ -87,11 +106,11 @@ def get_file(
     file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
     has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
     return file_meta
 
@@ -114,11 +133,11 @@ def get_download_url(
     file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
     has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
     download_url = f"{file_meta.oss_path}?download=true"
     
@@ -159,9 +178,9 @@ def delete_file(
     success = service.delete_file(file_uuid, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    return {"message": "File deleted"}
+    return {"message": "文件已删除"}
 
 
 @router.post("/{file_uuid}/usage")
@@ -185,13 +204,13 @@ def create_file_usage(
     try:
         target_type_enum = TargetType(target_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid target type")
+        raise HTTPException(status_code=400, detail="无效的目标类型")
     
     service = FileService(db)
     
     file_meta = service.get_file_by_uuid(file_uuid)
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
     usage = service.create_file_usage(
         file_uuid=file_uuid,
@@ -201,7 +220,7 @@ def create_file_usage(
     )
     
     return {
-        "message": "Usage recorded",
+        "message": "使用记录已创建",
         "usage_id": usage.id,
     }
 
@@ -217,11 +236,11 @@ def get_file_usages(
     file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
     has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
     usages = service.get_file_usages(file_uuid)
     

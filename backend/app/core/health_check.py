@@ -9,14 +9,13 @@ Features:
 """
 import time
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Any, Dict
 
 from sqlalchemy import text
-from sqlalchemy.orm import Session
 
-from app.db.session import SessionLocal
-from app.core.redis_client import redis_client
 from app.core.config import settings
+from app.core.redis_client import redis_client
+from app.db.session import SessionLocal
 
 
 class HealthCheckResult:

@@ -72,7 +72,7 @@ def get_topic(
     topic = topic_service.get_topic(topic_id, include_posts=False)
     
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
     topic_service.increment_view(topic_id)
     
@@ -95,7 +95,7 @@ def update_topic(
     )
     
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
     return topic
 
@@ -111,9 +111,9 @@ def delete_topic(
     success = topic_service.delete_topic(topic_id, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
-    return {"message": "Topic deleted successfully"}
+    return {"message": "话题已删除"}
 
 
 @router.post("/topics/{topic_id}/posts", response_model=PostResponse)
@@ -128,7 +128,7 @@ def create_post(
     
     topic = topic_service.get_topic(topic_id)
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
     post_service = PostService(db)
     post = post_service.create_post(
@@ -170,7 +170,7 @@ def accept_post(
     post = post_service.get_post(post_id)
     
     if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(status_code=404, detail="帖子不存在")
     
     success = post_service.accept_post(
         post.topic_id,
@@ -179,9 +179,9 @@ def accept_post(
     )
     
     if not success:
-        raise HTTPException(status_code=403, detail="Not authorized to accept this post")
+        raise HTTPException(status_code=403, detail="无权采纳此帖子")
     
-    return {"message": "Post accepted as answer"}
+    return {"message": "帖子已采纳为答案"}
 
 
 @router.delete("/posts/{post_id}")
@@ -195,9 +195,9 @@ def delete_post(
     success = post_service.delete_post(post_id, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(status_code=404, detail="帖子不存在")
     
-    return {"message": "Post deleted successfully"}
+    return {"message": "帖子已删除"}
 
 
 @router.post("/posts/{post_id}/like")
