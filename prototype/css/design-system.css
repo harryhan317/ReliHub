@@ -127,28 +127,7 @@ body {
 }
 
 .phone-notch {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: var(--phone-notch-width);
-  height: var(--phone-notch-height);
-  background: #1e293b;
-  border-radius: 0 0 20px 20px;
-  z-index: var(--z-sticky);
-}
-
-.phone-notch::before {
-  content: '';
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 8px;
-  height: 8px;
-  background: #334155;
-  border-radius: 50%;
-  box-shadow: 0 0 4px rgba(0, 136, 255, 0.2);
+  display: none;
 }
 
 .phone-screen {
@@ -267,8 +246,8 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 0 var(--spacing-lg);
-  height: var(--topbar-height);
-  min-height: var(--topbar-height);
+  height: calc(var(--topbar-height) + var(--safe-area-top));
+  min-height: calc(var(--topbar-height) + var(--safe-area-top));
   padding-top: var(--safe-area-top);
   background: var(--color-bg-glass);
   backdrop-filter: blur(20px);
@@ -311,6 +290,7 @@ body {
   left: 0;
   right: 0;
   height: calc(var(--nav-height) + var(--safe-area-bottom));
+  padding-top: 4px;
   padding-bottom: var(--safe-area-bottom);
   background: var(--color-bg-glass);
   backdrop-filter: blur(20px);
