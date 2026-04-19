@@ -21,6 +21,7 @@ TEST_ACCOUNTS = [
     {"phone": "13800000018", "password": "Reli@Shu2026b", "nickname": "王资深", "rank": "熟手", "reputation_points": 900, "gold_beans": 600},
     {"phone": "13800000019", "password": "Reli@Lao2026!", "nickname": "冯老炮", "rank": "老炮", "reputation_points": 1200, "gold_beans": 800},
     {"phone": "13800000020", "password": "Reli@Da2026!", "nickname": "陈达人", "rank": "达人", "reputation_points": 2500, "gold_beans": 1200},
+    {"phone": "13800000021", "password": "Reli@Zhuan2026!", "nickname": "魏专家", "rank": "专家", "reputation_points": 6000, "gold_beans": 3000},
 ]
 
 

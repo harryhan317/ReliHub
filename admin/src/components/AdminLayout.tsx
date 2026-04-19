@@ -12,9 +12,16 @@ const navItems = [
     section: '配置管理',
     items: [
       { path: '/admin/config-ai', icon: '🤖', label: 'AI问答配置' },
+      { path: '/admin/config-ai-model', icon: '🧠', label: 'AI模型配置' },
       { path: '/admin/config-level', icon: '🏆', label: '等级体系' },
+      { path: '/admin/config-permission', icon: '🔑', label: '功能权限' },
       { path: '/admin/config-beans', icon: '🫘', label: '可可豆/信誉分' },
       { path: '/admin/config-category', icon: '📂', label: '分类管理' },
+      { path: '/admin/config-download-pack', icon: '📦', label: '下载扩充包' },
+      { path: '/admin/config-file-format', icon: '📄', label: '文件格式配置' },
+      { path: '/admin/config-profile-required', icon: '📋', label: '个人信息必填项' },
+      { path: '/admin/config-sensitive-word', icon: '🚫', label: '敏感词库' },
+      { path: '/admin/config-pricing', icon: '💰', label: '资源定价区间' },
       { path: '/admin/config-security', icon: '🔒', label: '安全风控' },
     ],
   },
@@ -30,6 +37,14 @@ const navItems = [
     items: [
       { path: '/admin/user-list', icon: '👥', label: '用户列表' },
       { path: '/admin/user-expert', icon: '🎓', label: '专家认证' },
+      { path: '/admin/feedback', icon: '📨', label: '意见反馈' },
+      { path: '/admin/admin-account', icon: '🛡️', label: '管理员账号' },
+    ],
+  },
+  {
+    section: '安全审计',
+    items: [
+      { path: '/admin/security-log', icon: '📝', label: '安全日志' },
     ],
   },
 ];
@@ -37,14 +52,24 @@ const navItems = [
 const pageTitles: Record<string, string> = {
   dashboard: '系统看板',
   'config-ai': 'AI问答配置',
+  'config-ai-model': 'AI模型与提示词配置',
   'config-level': '等级体系配置',
+  'config-permission': '功能权限配置',
   'config-beans': '可可豆/信誉分配置',
   'config-category': '分类管理',
+  'config-download-pack': '下载扩充包配置',
+  'config-file-format': '文件格式与上传限制配置',
+  'config-profile-required': '个人信息等级必填项配置',
+  'config-sensitive-word': '敏感词库管理',
+  'config-pricing': '资源定价区间配置',
   'config-security': '安全风控配置',
   'audit-resource': '资源审核',
   'audit-community': '社区审核',
   'user-list': '用户列表',
   'user-expert': '专家认证审核',
+  'feedback': '意见反馈工单',
+  'admin-account': '管理员账号管理',
+  'security-log': '安全日志',
 };
 
 export default function AdminLayout() {
