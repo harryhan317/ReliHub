@@ -18,7 +18,7 @@ from app.schemas.llm_provider import (
     LLMProviderUpdate,
 )
 
-router = APIRouter(prefix="/admin/llm-providers", tags=["admin-llm-providers"])
+router = APIRouter(prefix="/llm-providers", tags=["admin-llm-providers"])
 
 
 @router.get("", response_model=LLMProviderList)

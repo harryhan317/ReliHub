@@ -4,6 +4,7 @@ Central API router – mounts all v1 sub-routers.
 from fastapi import APIRouter
 
 from app.api.v1.admin.audit import router as admin_audit_router
+from app.api.v1.admin.auth import router as admin_auth_router
 from app.api.v1.admin.config import router as admin_config_router
 from app.api.v1.admin.content import router as admin_content_router
 from app.api.v1.admin.dashboard import router as admin_dashboard_router
@@ -37,7 +38,8 @@ api_router.include_router(notification_router, prefix="/notifications", tags=["�
 api_router.include_router(payment_router, tags=["支付模块"])
 api_router.include_router(search_router, tags=["搜索模块"])
 
-api_router.include_router(admin_users_router, prefix="/admin/users", tags=["管理后台-用户管理"])
+api_router.include_router(admin_auth_router, prefix="/admin", tags=["管理后台-认证"])
+api_router.include_router(admin_users_router, prefix="/admin", tags=["管理后台-用户管理"])
 api_router.include_router(admin_content_router, prefix="/admin", tags=["管理后台-内容审核"])
 api_router.include_router(admin_audit_router, prefix="/admin", tags=["管理后台-审计日志"])
 api_router.include_router(admin_config_router, prefix="/admin", tags=["管理后台-系统配置"])

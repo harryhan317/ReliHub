@@ -15,6 +15,9 @@ from .admin import (
     packages_router,
 )
 from .admin import (
+    auth_router as admin_auth_router,
+)
+from .admin import (
     users_router as admin_users_router,
 )
 
@@ -46,6 +49,7 @@ api_router.include_router(notification_router, prefix="/notifications")
 api_router.include_router(files_router, prefix="/files")
 
 # Admin routers
+api_router.include_router(admin_auth_router, prefix="/admin")
 api_router.include_router(admin_users_router, prefix="/admin")
 api_router.include_router(content_router, prefix="/admin")
 api_router.include_router(audit_router, prefix="/admin")

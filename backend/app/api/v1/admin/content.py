@@ -20,6 +20,25 @@ from app.services.admin_service import AdminService
 router = APIRouter(tags=["Admin - Content"])
 
 
+@router.get("/resources", response_model=ResourceListResponse)
+def list_resources(
+    status: Optional[str] = Query(None, description="Filter by resource status"),
+    page: int = Query(1, ge=1, description="Page number"),
+    page_size: int = Query(20, ge=1, le=100, description="Page size"),
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(require_admin)
+):
+    service = AdminService(db, admin)
+    resources, total = service.list_resources(status=status, page=page, page_size=page_size)
+    
+    return ResourceListResponse(
+        resources=[ResourceResponse.model_validate(r) for r in resources],
+        total=total,
+        page=page,
+        page_size=page_size
+    )
+
+
 @router.get("/resources/pending", response_model=ResourceListResponse)
 def list_pending_resources(
     page: int = Query(1, ge=1, description="Page number"),

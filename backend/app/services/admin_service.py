@@ -226,6 +226,33 @@ class AdminService:
         
         return list(resources), total
 
+    def list_resources(
+        self,
+        status: Optional[str] = None,
+        page: int = 1,
+        page_size: int = 20
+    ) -> Tuple[List[Resource], int]:
+        filters = []
+        if status:
+            try:
+                status_enum = ResourceStatus(status)
+                filters.append(Resource.status == status_enum)
+            except ValueError:
+                pass
+        
+        count_query = select(func.count()).where(and_(*filters)) if filters else select(func.count())
+        total = self.db.execute(count_query).scalar() or 0
+        
+        query = select(Resource).order_by(Resource.created_at.desc())
+        if filters:
+            query = query.where(and_(*filters))
+        query = query.offset((page - 1) * page_size).limit(page_size)
+        
+        result = self.db.execute(query)
+        resources = result.scalars().all()
+        
+        return list(resources), total
+
     def get_resource(self, resource_id: str) -> Optional[Resource]:
         return self.db.get(Resource, resource_id)
 
@@ -601,6 +628,7 @@ class AdminService:
             "pending_resources": pending_resources,
             "total_topics": total_topics,
             "total_posts": total_posts,
+            "total_revenue": 0,
             "total_feedbacks": total_feedbacks,
             "pending_feedbacks": pending_feedbacks,
         }
