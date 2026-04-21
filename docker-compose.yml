@@ -48,7 +48,7 @@ services:
       API_V1_STR: /api/v1
       SECRET_KEY: super-secret-key-change-me-in-production
       PHONE_BLIND_INDEX_KEY: independent-blind-index-key-change-me
-      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000"]'
       COS_SECRET_ID: your_cos_secret_id
       COS_SECRET_KEY: your_cos_secret_key
       COS_REGION: ap-shanghai
@@ -81,7 +81,7 @@ services:
       API_V1_STR: /api/v1
       SECRET_KEY: super-secret-key-change-me-in-production
       PHONE_BLIND_INDEX_KEY: independent-blind-index-key-change-me
-      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000"]'
       COS_SECRET_ID: your_cos_secret_id
       COS_SECRET_KEY: your_cos_secret_key
       COS_REGION: ap-shanghai
@@ -104,6 +104,15 @@ services:
         PYTHONPATH=/app python3 scripts/create_seed_data.py &&
         echo 'Initialization complete!'
       "
+
+  web:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
   admin:
     build:

@@ -206,3 +206,40 @@ body {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+@media (max-width: 430px) {
+  :root {
+    --phone-width: 100vw;
+    --phone-height: 100vh;
+    --phone-radius: 0px;
+    --safe-area-top: env(safe-area-inset-top, 20px);
+    --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  body {
+    background: var(--color-bg-primary);
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+@media (min-width: 431px) and (max-width: 768px) {
+  :root {
+    --phone-width: 100vw;
+    --phone-height: 100vh;
+    --phone-radius: 0px;
+  }
+
+  body {
+    background: var(--color-bg-primary);
+  }
+
+  #root {
+    width: 100vw;
+    height: 100vh;
+  }
+}
