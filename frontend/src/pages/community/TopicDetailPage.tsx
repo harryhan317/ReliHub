@@ -1,23 +1,41 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
 import { TopBar } from '../../layouts/Components';
 import { Tag, Avatar } from '../../components/ui/Common';
 import { Modal } from '../../components/ui/Modal';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
+import { communityService } from '../../services/communityService';
+
+const REPORT_REASONS = [
+  '内容违规',
+  '恶意攻击',
+  '广告灌水',
+  '虚假信息',
+  '抄袭侵权',
+  '其他',
+];
 
 const TopicDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { isGuest } = useAuthStore();
   const { showToast } = useUIStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
+
   const [replyContent, setReplyContent] = useState('');
   const [showMore, setShowMore] = useState(false);
   const [liked, setLiked] = useState(false);
   const [followed, setFollowed] = useState(false);
   const [collected, setCollected] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetail, setReportDetail] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const topic = {
+  const [topic, setTopic] = useState({
     id: id || '1',
     title: 'BGA焊点开裂的根因分析方法',
     content: '产品在温度循环测试后出现BGA焊点开裂，求教各位大佬如何系统性地进行根因分析？目前已做了切片分析，发现开裂位置在IMC层附近，但不确定是工艺问题还是设计问题。有经验的大佬帮忙分析下，谢谢！',
@@ -28,9 +46,13 @@ const TopicDetailPage: React.FC = () => {
     like_count: 28,
     dislike_count: 1,
     time: '2小时前发布',
-  };
+  });
 
-  const replies = [
+  const [replies, setReplies] = useState<Array<{
+    id: string; author_name: string; author_level: string;
+    content: string; like_count: number; is_best: boolean; time: string;
+    avatar_bg: string;
+  }>>([
     {
       id: 'r1', author_name: '王专家', author_level: '老炮',
       content: 'IMC层开裂通常与以下因素有关：1. 回流焊温度曲线不合理导致IMC过厚；2. PCB焊盘设计不满足BGA要求；3. 材料CTE不匹配。建议先检查回流焊曲线和IMC厚度...',
@@ -43,14 +65,141 @@ const TopicDetailPage: React.FC = () => {
       like_count: 8, is_best: false, time: '45分钟前',
       avatar_bg: 'linear-gradient(135deg,#f59e0b,#d97706)',
     },
-  ];
+  ]);
 
-  const handleReply = () => {
-    if (isGuest) { showToast('请先登录', 'info'); navigate('/login'); return; }
-    if (!replyContent.trim()) { showToast('请输入回复内容', 'error'); return; }
-    showToast('回复成功', 'success');
-    setReplyContent('');
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      communityService.getTopic(id).then((res) => {
+        if (res.data) {
+          const d = res.data;
+          setTopic({
+            id: d.id,
+            title: d.title,
+            content: d.content || '',
+            tags: d.tags?.map((t: any) => ({ text: typeof t === 'string' ? t : t.text, variant: 'accent' as const })) || [],
+            author_name: d.author_name || d.author?.nickname || '匿名',
+            author_level: d.author_level || d.author?.rank || '',
+            reply_count: d.reply_count || 0,
+            like_count: d.like_count || 0,
+            dislike_count: d.dislike_count || 0,
+            time: d.created_at ? new Date(d.created_at).toLocaleDateString() : '',
+          });
+          setLiked(d.is_liked || false);
+          setCollected(d.is_collected || false);
+        }
+      }).catch(() => {}).finally(() => setLoading(false));
+
+      communityService.getReplies(id).then((res) => {
+        if (res.data?.items) {
+          setReplies(res.data.items.map((r: any) => ({
+            id: r.id,
+            author_name: r.author_name || r.author?.nickname || '匿名',
+            author_level: r.author_level || r.author?.rank || '',
+            content: r.content,
+            like_count: r.like_count || 0,
+            is_best: r.is_best || false,
+            time: r.created_at ? new Date(r.created_at).toLocaleDateString() : '',
+            avatar_bg: 'linear-gradient(135deg,#6366f1,#8b5cf6)',
+          })));
+        }
+      }).catch(() => {});
+    } else {
+      setLoading(false);
+    }
+  }, [id]);
+
+  const handleReply = async () => {
+    if (isGuest) {
+      checkAction('reply');
+      return;
+    }
+    if (!replyContent.trim()) {
+      showToast('请输入回复内容', 'error');
+      return;
+    }
+    try {
+      if (id) await communityService.createReply(id, replyContent);
+      showToast('回复成功', 'success');
+      setReplyContent('');
+      setTopic((prev) => ({ ...prev, reply_count: prev.reply_count + 1 }));
+    } catch {
+      showToast('回复失败', 'error');
+    }
   };
+
+  const handleLike = async () => {
+    if (isGuest) {
+      checkAction('like');
+      return;
+    }
+    try {
+      if (id) await communityService.likeTopic(id);
+      setLiked(!liked);
+      showToast(liked ? '已取消点赞' : '点赞成功', 'success');
+    } catch {
+      showToast('操作失败', 'error');
+    }
+  };
+
+  const handleCollect = async () => {
+    if (isGuest) {
+      checkAction('collect');
+      return;
+    }
+    try {
+      if (id) {
+        if (collected) {
+          await communityService.uncollectTopic(id);
+        } else {
+          await communityService.collectTopic(id);
+        }
+      }
+      setCollected(!collected);
+      showToast(collected ? '已取消收藏' : '收藏成功', 'success');
+    } catch {
+      showToast('操作失败', 'error');
+    }
+  };
+
+  const handleReport = () => {
+    if (isGuest) {
+      checkAction('report');
+      return;
+    }
+    setShowMore(false);
+    setShowReport(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportReason) {
+      showToast('请选择举报原因', 'error');
+      return;
+    }
+    try {
+      if (id) await communityService.reportTopic(id, { reason: reportReason, detail: reportDetail });
+      showToast('举报已提交，我们会尽快处理', 'success');
+      setShowReport(false);
+      setReportReason('');
+      setReportDetail('');
+    } catch {
+      showToast('举报提交失败', 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page active">
+        <TopBar title="话题详情" />
+        <div className="content-area-no-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+            <div>加载中...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page active">
@@ -82,7 +231,7 @@ const TopicDetailPage: React.FC = () => {
           </div>
 
           <div className="topic-actions">
-            <button className="icon-btn" onClick={() => setLiked(!liked)} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)' }}>
+            <button className="icon-btn" onClick={handleLike} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)' }}>
               👍 {topic.like_count + (liked ? 1 : 0)}
             </button>
             <button className="icon-btn" style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 'var(--font-size-caption)' }}>
@@ -141,20 +290,56 @@ const TopicDetailPage: React.FC = () => {
             <div className="menu-icon" style={{ background: 'var(--color-accent-light)' }}>🔗</div>
             <span className="menu-text">分享话题</span>
           </div>
-          <div className="menu-item" onClick={() => { setShowMore(false); setCollected(!collected); showToast(collected ? '已取消收藏' : '收藏成功', 'success'); }}>
+          <div className="menu-item" onClick={() => { setShowMore(false); handleCollect(); }}>
             <div className="menu-icon" style={{ background: 'rgba(245,158,11,0.15)' }}>⭐</div>
-            <span className="menu-text">收藏话题</span>
+            <span className="menu-text">{collected ? '取消收藏' : '收藏话题'}</span>
           </div>
           <div className="menu-item" onClick={() => { setShowMore(false); showToast('已屏蔽该用户', 'success'); }}>
             <div className="menu-icon" style={{ background: 'rgba(100,116,139,0.15)' }}>🚫</div>
             <span className="menu-text">屏蔽此用户</span>
           </div>
-          <div className="menu-item" onClick={() => { setShowMore(false); showToast('举报已提交', 'success'); }}>
+          <div className="menu-item" onClick={handleReport}>
             <div className="menu-icon" style={{ background: 'var(--color-error-bg)' }}>⚠️</div>
             <span className="menu-text">举报</span>
           </div>
         </div>
       </Modal>
+
+      <Modal open={showReport} onClose={() => setShowReport(false)}>
+        <div style={{ padding: 'var(--spacing-lg)' }}>
+          <div style={{ fontSize: 'var(--font-size-h3)', fontWeight: 700, marginBottom: 'var(--spacing-lg)' }}>举报话题</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+            {REPORT_REASONS.map((reason) => (
+              <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="topic-report-reason"
+                  checked={reportReason === reason}
+                  onChange={() => setReportReason(reason)}
+                  style={{ accentColor: 'var(--color-accent)' }}
+                />
+                <span style={{ fontSize: 'var(--font-size-body)' }}>{reason}</span>
+              </label>
+            ))}
+          </div>
+          <textarea
+            className="input-field"
+            rows={3}
+            placeholder="补充说明（选填）"
+            style={{ resize: 'none', marginBottom: 'var(--spacing-lg)' }}
+            value={reportDetail}
+            onChange={(e) => setReportDetail(e.target.value)}
+          />
+          <button className="btn btn-primary btn-block" onClick={submitReport}>提交举报</button>
+        </div>
+      </Modal>
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

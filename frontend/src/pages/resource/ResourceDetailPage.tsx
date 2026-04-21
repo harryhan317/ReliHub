@@ -1,22 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
 import { TopBar } from '../../layouts/Components';
 import { Card, Tag, Avatar } from '../../components/ui/Common';
 import { Modal } from '../../components/ui/Modal';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { resourceService } from '../../services/resourceService';
+
+const REPORT_REASONS = [
+  '内容违规',
+  '侵犯版权',
+  '虚假信息',
+  '重复资源',
+  '分类错误',
+  '其他',
+];
 
 const ResourceDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { isGuest } = useAuthStore();
+  const { isGuest, user } = useAuthStore();
   const { showToast } = useUIStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
+
   const [showDownloadConfirm, setShowDownloadConfirm] = useState(false);
   const [liked, setLiked] = useState(false);
   const [collected, setCollected] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [reportReason, setReportReason] = useState('');
+  const [reportDetail, setReportDetail] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const resource = {
+  const [resource, setResource] = useState({
     id: id || '1',
     title: 'GJB/Z 299C 电子设备可靠性预计手册',
     description: '涵盖元器件计数法和应力分析法，适用于军工及高可靠领域的电子设备可靠性预计。包含各类元器件的基本失效率数据及修正因子。',
@@ -32,10 +49,45 @@ const ResourceDetailPage: React.FC = () => {
     price: 5,
     file_type: 'PDF',
     file_size: '12.5 MB',
-  };
+  });
+
+  useEffect(() => {
+    if (id) {
+      setLoading(true);
+      resourceService.getResource(id).then((res) => {
+        if (res.data) {
+          const d = res.data;
+          setResource({
+            id: d.id,
+            title: d.title,
+            description: d.description || '',
+            tags: d.tags?.map((t: any) => ({ text: typeof t === 'string' ? t : t.text, variant: 'accent' as const })) || [],
+            keywords: d.keywords || [],
+            author_name: d.author_name || d.author?.nickname || '匿名',
+            author_level: d.author_level || d.author?.rank || '',
+            time: d.created_at ? new Date(d.created_at).toLocaleDateString() : '',
+            download_count: d.download_count || 0,
+            view_count: String(d.view_count || 0),
+            like_count: d.like_count || 0,
+            dislike_count: d.dislike_count || 0,
+            price: d.price || 0,
+            file_type: d.file_type || 'PDF',
+            file_size: d.file_size || '',
+          });
+          setLiked(d.is_liked || false);
+          setCollected(d.is_collected || false);
+        }
+      }).catch(() => {}).finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
+  }, [id]);
 
   const handleDownload = () => {
-    if (isGuest) { showToast('请先登录', 'info'); navigate('/login'); return; }
+    if (isGuest) {
+      checkAction('download');
+      return;
+    }
     setShowDownloadConfirm(true);
   };
 
@@ -46,6 +98,78 @@ const ResourceDetailPage: React.FC = () => {
       setShowDownloadConfirm(false);
     } catch { showToast('下载失败', 'error'); }
   };
+
+  const handleCollect = async () => {
+    if (isGuest) {
+      checkAction('collect');
+      return;
+    }
+    try {
+      if (id) {
+        if (collected) {
+          await resourceService.uncollectResource(id);
+        } else {
+          await resourceService.collectResource(id);
+        }
+      }
+      setCollected(!collected);
+      showToast(collected ? '已取消收藏' : '收藏成功', 'success');
+    } catch {
+      showToast('操作失败', 'error');
+    }
+  };
+
+  const handleLike = async () => {
+    if (isGuest) {
+      checkAction('like');
+      return;
+    }
+    try {
+      if (id) await resourceService.likeResource(id);
+      setLiked(!liked);
+      showToast(liked ? '已取消点赞' : '点赞成功', 'success');
+    } catch {
+      showToast('操作失败', 'error');
+    }
+  };
+
+  const handleReport = () => {
+    if (isGuest) {
+      checkAction('report');
+      return;
+    }
+    setShowReport(true);
+  };
+
+  const submitReport = async () => {
+    if (!reportReason) {
+      showToast('请选择举报原因', 'error');
+      return;
+    }
+    try {
+      if (id) await resourceService.reportResource(id, { reason: reportReason, detail: reportDetail });
+      showToast('举报已提交，我们会尽快处理', 'success');
+      setShowReport(false);
+      setReportReason('');
+      setReportDetail('');
+    } catch {
+      showToast('举报提交失败', 'error');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page active">
+        <TopBar title="资源详情" />
+        <div className="content-area-no-nav" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ textAlign: 'center', color: 'var(--color-text-muted)' }}>
+            <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+            <div>加载中...</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page active">
@@ -76,11 +200,13 @@ const ResourceDetailPage: React.FC = () => {
             {resource.description}
           </div>
 
-          <div className="tag-row" style={{ flexWrap: 'wrap', marginBottom: 'var(--spacing-xl)' }}>
-            {resource.keywords.map((kw) => (
-              <Tag key={kw} variant="accent">{kw}</Tag>
-            ))}
-          </div>
+          {resource.keywords.length > 0 && (
+            <div className="tag-row" style={{ flexWrap: 'wrap', marginBottom: 'var(--spacing-xl)' }}>
+              {resource.keywords.map((kw) => (
+                <Tag key={kw} variant="accent">{kw}</Tag>
+              ))}
+            </div>
+          )}
 
           <Card style={{ marginBottom: 'var(--spacing-lg)' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--spacing-md)', fontSize: 'var(--font-size-caption)' }}>
@@ -105,13 +231,15 @@ const ResourceDetailPage: React.FC = () => {
           <div className="divider"></div>
 
           <div style={{ display: 'flex', justifyContent: 'space-around', padding: 'var(--spacing-md) 0' }}>
-            <button className="icon-btn action-col" onClick={() => { if (isGuest) { navigate('/login'); return; } setCollected(!collected); showToast(collected ? '已取消收藏' : '收藏成功', 'success'); }}>
+            <button className="icon-btn action-col" onClick={handleCollect}>
               {collected ? '⭐' : '☆'}<span>{collected ? '已收藏' : '收藏'}</span>
             </button>
-            <button className="icon-btn action-col" onClick={() => { if (isGuest) { navigate('/login'); return; } setLiked(!liked); showToast(liked ? '已取消点赞' : '点赞成功', 'success'); }}>
+            <button className="icon-btn action-col" onClick={handleLike}>
               👍<span>{resource.like_count + (liked ? 1 : 0)}</span>
             </button>
-            <button className="icon-btn action-col">👎<span>{resource.dislike_count}</span></button>
+            <button className="icon-btn action-col" onClick={handleReport}>
+              �<span>举报</span>
+            </button>
             <button className="icon-btn action-col" onClick={() => { navigator.clipboard.writeText(window.location.href); showToast('链接已复制', 'success'); }}>🔗<span>分享</span></button>
           </div>
         </div>
@@ -133,12 +261,48 @@ const ResourceDetailPage: React.FC = () => {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--spacing-lg)', fontSize: 'var(--font-size-caption)', color: 'var(--color-text-muted)' }}>
             <span>当前余额</span>
-            <span>50 🫘</span>
+            <span>{user?.cocoa_beans || 0} 🫘</span>
           </div>
           <button className="btn btn-primary btn-block btn-lg" onClick={confirmDownload}>确认下载</button>
           <button className="btn btn-secondary btn-block" style={{ marginTop: 'var(--spacing-sm)' }} onClick={() => setShowDownloadConfirm(false)}>取消</button>
         </div>
       </Modal>
+
+      <Modal open={showReport} onClose={() => setShowReport(false)}>
+        <div style={{ padding: 'var(--spacing-lg)' }}>
+          <div style={{ fontSize: 'var(--font-size-h3)', fontWeight: 700, marginBottom: 'var(--spacing-lg)' }}>举报资源</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-md)', marginBottom: 'var(--spacing-lg)' }}>
+            {REPORT_REASONS.map((reason) => (
+              <label key={reason} style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm)', cursor: 'pointer' }}>
+                <input
+                  type="radio"
+                  name="report-reason"
+                  checked={reportReason === reason}
+                  onChange={() => setReportReason(reason)}
+                  style={{ accentColor: 'var(--color-accent)' }}
+                />
+                <span style={{ fontSize: 'var(--font-size-body)' }}>{reason}</span>
+              </label>
+            ))}
+          </div>
+          <textarea
+            className="input-field"
+            rows={3}
+            placeholder="补充说明（选填）"
+            style={{ resize: 'none', marginBottom: 'var(--spacing-lg)' }}
+            value={reportDetail}
+            onChange={(e) => setReportDetail(e.target.value)}
+          />
+          <button className="btn btn-primary btn-block" onClick={submitReport}>提交举报</button>
+        </div>
+      </Modal>
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

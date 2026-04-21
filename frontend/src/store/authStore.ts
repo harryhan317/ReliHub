@@ -10,12 +10,12 @@ interface AuthStore {
   accessToken: string | null;
 
   init: () => void;
-  login: (phone: string, password: string) => Promise<void>;
-  loginByCode: (phone: string, code: string) => Promise<void>;
+  login: (phone: string, password: string) => Promise<{ is_new_user: boolean }>;
+  loginByCode: (phone: string, code: string) => Promise<{ is_new_user: boolean }>;
   register: (phone: string, code: string, password?: string) => Promise<void>;
   wechatLogin: (code: string) => Promise<void>;
   logout: () => void;
-  updateUser: (data: Partial<User>) => void;
+  updateUser: (data: Partial<User>) => Promise<void>;
   setGuest: () => void;
 }
 
@@ -51,10 +51,11 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     set({
       isGuest: false,
       isLoggedIn: true,
-      isNewUser: false,
+      isNewUser: res.is_new_user || false,
       accessToken: res.access_token,
       user: res.user,
     });
+    return { is_new_user: res.is_new_user || false };
   },
 
   loginByCode: async (phone, code) => {
@@ -66,6 +67,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       accessToken: res.access_token,
       user: res.user,
     });
+    return { is_new_user: res.is_new_user };
   },
 
   register: async (phone, code, password) => {
@@ -101,12 +103,18 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     });
   },
 
-  updateUser: (data) => {
+  updateUser: async (data) => {
     const currentUser = get().user;
     if (currentUser) {
       const updatedUser = { ...currentUser, ...data };
       localStorage.setItem('user', JSON.stringify(updatedUser));
       set({ user: updatedUser });
+      try {
+        const serverUser = await authService.updateProfile(data);
+        if (serverUser) {
+          set({ user: serverUser });
+        }
+      } catch {}
     }
   },
 

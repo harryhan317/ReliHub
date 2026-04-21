@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
+import { useGuestStore } from '../../store/guestStore';
 import { BottomNav, GuestBanner, SearchBar, SectionHeader } from '../../layouts/Components';
 import { Card, Tag } from '../../components/ui/Common';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { communityService } from '../../services/communityService';
 import type { Topic } from '../../types';
 
@@ -47,7 +50,25 @@ const hotTopics = [
 const CommunityPage: React.FC = () => {
   const navigate = useNavigate();
   const { isGuest } = useAuthStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
+  const guestStore = useGuestStore();
   const [topics, setTopics] = useState<Topic[]>([]);
+
+  const handleTopicClick = (id: string) => {
+    if (isGuest) {
+      if (!checkAction('community_limit')) return;
+      guestStore.incrementCommunityView();
+    }
+    navigate(`/community/topic/${id}`);
+  };
+
+  const handleNewTopic = () => {
+    if (isGuest) {
+      checkAction('new_topic');
+      return;
+    }
+    navigate('/community/new-topic');
+  };
 
   useEffect(() => {
     communityService.getTopics({ page: 1, page_size: 10 }).then((res) => {
@@ -59,7 +80,7 @@ const CommunityPage: React.FC = () => {
     <div className="page active">
       <div className="top-bar">
         <div className="top-bar-title gradient-text">技术社区</div>
-        <button className="top-bar-btn" onClick={() => navigate('/community/new-topic')}>✏️</button>
+        <button className="top-bar-btn" onClick={handleNewTopic}>✏️</button>
       </div>
 
       {isGuest && (
@@ -96,7 +117,7 @@ const CommunityPage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.05 }}
             >
-              <Card className="topic-card" onClick={() => navigate(`/community/topic/${topic.id}`)}>
+              <Card className="topic-card" onClick={() => handleTopicClick(topic.id)}>
                 <div className="tag-row">
                   {topic.tags.map((tag) => (
                     <Tag key={tag.text} variant={tag.variant}>{tag.text}</Tag>
@@ -117,6 +138,13 @@ const CommunityPage: React.FC = () => {
       </div>
 
       <BottomNav activeTab="community" />
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

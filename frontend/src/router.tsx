@@ -22,6 +22,10 @@ import ProfileEditPage from './pages/my/ProfileEditPage';
 import MyResourcesPage from './pages/my/MyResourcesPage';
 import MyTopicsPage from './pages/my/MyTopicsPage';
 import MyCollectionsPage from './pages/my/MyCollectionsPage';
+import BeansDetailPage from './pages/my/BeansDetailPage';
+import CreditDetailPage from './pages/my/CreditDetailPage';
+import LevelPage from './pages/my/LevelPage';
+import AccountSecurityPage from './pages/my/AccountSecurityPage';
 import SearchPage from './pages/search/SearchPage';
 import NotificationPage from './pages/notification/NotificationPage';
 import FeedbackPage from './pages/feedback/FeedbackPage';
@@ -65,6 +69,10 @@ export const router = createBrowserRouter([
       { path: 'my/resources', element: <MyResourcesPage /> },
       { path: 'my/topics', element: <MyTopicsPage /> },
       { path: 'my/collections', element: <MyCollectionsPage /> },
+      { path: 'my/beans', element: <BeansDetailPage /> },
+      { path: 'my/credit', element: <CreditDetailPage /> },
+      { path: 'my/level', element: <LevelPage /> },
+      { path: 'my/security', element: <AccountSecurityPage /> },
       { path: 'search', element: <SearchPage /> },
       { path: 'notification', element: <NotificationPage /> },
       { path: 'feedback', element: <FeedbackPage /> },

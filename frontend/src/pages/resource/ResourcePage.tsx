@@ -2,8 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
+import { useGuestStore } from '../../store/guestStore';
 import { BottomNav, GuestBanner, SearchBar, SectionHeader } from '../../layouts/Components';
 import { Card, Tag } from '../../components/ui/Common';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { resourceService } from '../../services/resourceService';
 import type { Resource } from '../../types';
 
@@ -51,7 +54,25 @@ const hotResources = [
 const ResourcePage: React.FC = () => {
   const navigate = useNavigate();
   const { isGuest } = useAuthStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
+  const guestStore = useGuestStore();
   const [resources, setResources] = useState<Resource[]>([]);
+
+  const handleResourceClick = (id: string) => {
+    if (isGuest) {
+      if (!checkAction('resource_limit')) return;
+      guestStore.incrementResourceView();
+    }
+    navigate(`/resource/${id}`);
+  };
+
+  const handleUpload = () => {
+    if (isGuest) {
+      checkAction('upload');
+      return;
+    }
+    navigate('/resource/upload');
+  };
 
   useEffect(() => {
     resourceService.getResources({ page: 1, page_size: 10 }).then((res) => {
@@ -63,7 +84,7 @@ const ResourcePage: React.FC = () => {
     <div className="page active">
       <div className="top-bar">
         <div className="top-bar-title gradient-text">资源库</div>
-        <button className="top-bar-btn" onClick={() => navigate('/resource/upload')}>📤</button>
+        <button className="top-bar-btn" onClick={handleUpload}>📤</button>
       </div>
 
       {isGuest && (
@@ -104,7 +125,7 @@ const ResourcePage: React.FC = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 + i * 0.05 }}
             >
-              <Card className="resource-card" onClick={() => navigate(`/resource/${res.id}`)}>
+              <Card className="resource-card" onClick={() => handleResourceClick(res.id)}>
                 <div className="tag-row">
                   {res.tags.map((tag) => (
                     <Tag key={tag.text} variant={tag.variant}>{tag.text}</Tag>
@@ -125,6 +146,13 @@ const ResourcePage: React.FC = () => {
       </div>
 
       <BottomNav activeTab="resource" />
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

@@ -3,15 +3,18 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
 import { BottomNav } from '../../layouts/Components';
 import { Avatar } from '../../components/ui/Common';
 import { Modal } from '../../components/ui/Modal';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { ledgerService } from '../../services/otherServices';
 
 const MyPage: React.FC = () => {
   const navigate = useNavigate();
   const { isGuest, isLoggedIn, user, logout } = useAuthStore();
   const { showToast } = useUIStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
   const [checkedIn, setCheckedIn] = useState(user?.checked_in_today || false);
   const [showCheckin, setShowCheckin] = useState(false);
   const [showLogout, setShowLogout] = useState(false);
@@ -27,7 +30,7 @@ const MyPage: React.FC = () => {
   ];
 
   const handleCheckin = async () => {
-    if (isGuest) { showToast('请先登录', 'info'); navigate('/login'); return; }
+    if (isGuest) { checkAction('open_my'); return; }
     try {
       await ledgerService.checkin();
       setCheckedIn(true);
@@ -73,15 +76,15 @@ const MyPage: React.FC = () => {
         </div>
 
         <div style={{ display: 'flex', gap: 'var(--spacing-md)', padding: '0 var(--spacing-lg)', marginBottom: 'var(--spacing-lg)' }}>
-          <div className="stat-card">
+          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/my/beans')}>
             <div className="stat-value" style={{ color: 'var(--color-gold)' }}>{user?.cocoa_beans || 0}</div>
             <div className="stat-label">🫘 可可豆</div>
           </div>
-          <div className="stat-card">
+          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/my/credit')}>
             <div className="stat-value" style={{ color: 'var(--color-accent)' }}>{user?.credit_score || '--'}</div>
             <div className="stat-label">⭐ 信誉分</div>
           </div>
-          <div className="stat-card">
+          <div className="stat-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/my/level')}>
             <div className="stat-value">{user?.topic_count || 0}</div>
             <div className="stat-label">📝 话题</div>
           </div>
@@ -158,6 +161,13 @@ const MyPage: React.FC = () => {
           <button className="btn btn-primary btn-block" onClick={() => setShowCheckin(false)}>好的</button>
         </div>
       </Modal>
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

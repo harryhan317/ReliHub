@@ -13,7 +13,7 @@ export const communityService = {
   },
 
   async getTopic(id: string) {
-    const res = await api.get<ApiResponse<Topic & { replies: Reply[] }>>(`/community/topics/${id}`);
+    const res = await api.get<ApiResponse<Topic>>(`/community/topics/${id}`);
     return res.data;
   },
 
@@ -23,7 +23,14 @@ export const communityService = {
   },
 
   async createReply(topicId: string, content: string) {
-    const res = await api.post<ApiResponse<Reply>>(`/community/topics/${topicId}/replies`, { content });
+    const res = await api.post<ApiResponse<Reply>>(`/community/topics/${topicId}/posts`, { content });
+    return res.data;
+  },
+
+  async getReplies(topicId: string, page = 1, pageSize = 50) {
+    const res = await api.get<ApiResponse<PaginatedResponse<Reply>>>(`/community/topics/${topicId}/posts`, {
+      params: { page, page_size: pageSize },
+    });
     return res.data;
   },
 
@@ -32,8 +39,18 @@ export const communityService = {
     return res.data;
   },
 
+  async collectTopic(id: string) {
+    const res = await api.post<ApiResponse>(`/community/topics/${id}/collect`);
+    return res.data;
+  },
+
+  async uncollectTopic(id: string) {
+    const res = await api.delete<ApiResponse>(`/community/topics/${id}/collect`);
+    return res.data;
+  },
+
   async adoptReply(topicId: string, replyId: string) {
-    const res = await api.post<ApiResponse>(`/community/topics/${topicId}/adopt/${replyId}`);
+    const res = await api.post<ApiResponse>(`/community/posts/${replyId}/accept`);
     return res.data;
   },
 
@@ -42,8 +59,8 @@ export const communityService = {
     return res.data;
   },
 
-  async reportTopic(id: string, reason: string) {
-    const res = await api.post<ApiResponse>(`/community/topics/${id}/report`, { reason });
+  async reportTopic(id: string, data: { reason: string; detail?: string }) {
+    const res = await api.post<ApiResponse>(`/community/topics/${id}/report`, data);
     return res.data;
   },
 

@@ -3,15 +3,20 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
 import { useUIStore } from '../../store/uiStore';
+import { useGuestGuard } from '../../store/useGuestGuard';
+import { useGuestStore } from '../../store/guestStore';
 import { BottomNav, GuestBanner, SearchBar, SectionHeader } from '../../layouts/Components';
 import { Card, Tag } from '../../components/ui/Common';
 import { Modal } from '../../components/ui/Modal';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { aiService } from '../../services/aiService';
 
 const AskPage: React.FC = () => {
   const navigate = useNavigate();
   const { isGuest, isLoggedIn } = useAuthStore();
   const { showToast } = useUIStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
+  const guestStore = useGuestStore();
   const [inputValue, setInputValue] = useState('');
   const [showHistory, setShowHistory] = useState(false);
   const [sessions, setSessions] = useState<Array<{ id: string; title: string; message_count: number; updated_at: string }>>([]);
@@ -38,18 +43,16 @@ const AskPage: React.FC = () => {
   const handleSend = () => {
     if (!inputValue.trim()) return;
     if (isGuest) {
-      showToast('请先登录以使用AI问答', 'info');
-      navigate('/login');
-      return;
+      if (!checkAction('ai_limit')) return;
+      guestStore.incrementAISession();
     }
     navigate(`/chat?query=${encodeURIComponent(inputValue)}`);
   };
 
   const handleSuggestedQuestion = (text: string) => {
     if (isGuest) {
-      showToast('请先登录以使用AI问答', 'info');
-      navigate('/login');
-      return;
+      if (!checkAction('ai_limit')) return;
+      guestStore.incrementAISession();
     }
     navigate(`/chat?query=${encodeURIComponent(text)}`);
   };
@@ -166,6 +169,13 @@ const AskPage: React.FC = () => {
           )}
         </div>
       </Modal>
+
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
     </div>
   );
 };

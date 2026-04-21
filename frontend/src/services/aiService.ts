@@ -31,24 +31,23 @@ export const aiService = {
     return res.data;
   },
 
-  async sendMessage(sessionId: string, content: string) {
-    const res = await api.post<ApiResponse<AIMessage>>(`/ai/sessions/${sessionId}/messages`, { content });
+  async sendMessage(sessionId: string, content: string, stream = false) {
+    const res = await api.post<ApiResponse<AIMessage>>(`/ai/sessions/${sessionId}/messages`, { content, stream });
     return res.data;
   },
 
-  async likeMessage(messageId: string) {
-    const res = await api.post<ApiResponse>(`/ai/messages/${messageId}/like`);
+  async likeMessage(sessionId: string, messageId: string) {
+    const res = await api.post<ApiResponse>(`/ai/sessions/${sessionId}/feedback`, { message_id: messageId, feedback_type: 'like' });
     return res.data;
   },
 
-  async dislikeMessage(messageId: string) {
-    const res = await api.post<ApiResponse>(`/ai/messages/${messageId}/dislike`);
+  async dislikeMessage(sessionId: string, messageId: string) {
+    const res = await api.post<ApiResponse>(`/ai/sessions/${sessionId}/feedback`, { message_id: messageId, feedback_type: 'dislike' });
     return res.data;
   },
 
   getStreamUrl(sessionId: string) {
     const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1';
-    const token = localStorage.getItem('access_token');
-    return `${baseUrl}/ai/sessions/${sessionId}/stream?token=${token}`;
+    return `${baseUrl}/ai/sessions/${sessionId}/messages`;
   },
 };

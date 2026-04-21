@@ -23,7 +23,7 @@ const SettingsPage: React.FC = () => {
           <div className="menu-text">个人资料</div>
           <span className="menu-arrow">›</span>
         </div>
-        <div className="menu-item">
+        <div className="menu-item" onClick={() => navigate('/my/security')}>
           <div className="menu-icon" style={{ background: 'rgba(16,185,129,0.15)' }}>🔒</div>
           <div className="menu-text">账号安全</div>
           <span className="menu-arrow">›</span>

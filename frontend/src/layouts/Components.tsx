@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useUIStore } from '../store/uiStore';
+import { useGuestGuard } from '../store/useGuestGuard';
+import { GuestRegisterModal } from '../components/ui/GuestRegisterModal';
 import { Modal } from '../components/ui/Modal';
 
 interface TopBarProps {
@@ -52,12 +54,11 @@ interface BottomNavProps {
 export const BottomNav: React.FC<BottomNavProps> = ({ activeTab }) => {
   const navigate = useNavigate();
   const { isGuest } = useAuthStore();
-  const { showToast } = useUIStore();
+  const { checkAction, guideModal, closeGuideModal } = useGuestGuard();
 
   const handleTabClick = (tab: string) => {
     if (tab === 'my' && isGuest) {
-      showToast('请先登录以查看个人中心', 'info');
-      navigate('/login');
+      checkAction('open_my');
       return;
     }
 
@@ -79,18 +80,26 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab }) => {
   ];
 
   return (
-    <div className="bottom-nav">
-      {tabs.map((tab) => (
-        <button
-          key={tab.key}
-          className={`nav-item ${activeTab === tab.key ? 'active' : ''}`}
-          onClick={() => handleTabClick(tab.key)}
-        >
-          <span className="nav-icon">{tab.icon}</span>
-          <span className="nav-label">{tab.label}</span>
-        </button>
-      ))}
-    </div>
+    <>
+      <div className="bottom-nav">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            className={`nav-item ${activeTab === tab.key ? 'active' : ''}`}
+            onClick={() => handleTabClick(tab.key)}
+          >
+            <span className="nav-icon">{tab.icon}</span>
+            <span className="nav-label">{tab.label}</span>
+          </button>
+        ))}
+      </div>
+      <GuestRegisterModal
+        open={guideModal.open}
+        onClose={closeGuideModal}
+        source={guideModal.source}
+        reason={guideModal.reason}
+      />
+    </>
   );
 };
 

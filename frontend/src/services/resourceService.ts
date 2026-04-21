@@ -39,6 +39,16 @@ export const resourceService = {
     return res.data;
   },
 
+  async uncollectResource(id: string) {
+    const res = await api.delete<ApiResponse>(`/resources/${id}/collect`);
+    return res.data;
+  },
+
+  async reportResource(id: string, data: { reason: string; detail?: string }) {
+    const res = await api.post<ApiResponse>(`/resources/${id}/report`, data);
+    return res.data;
+  },
+
   async getMyResources(params: { type?: string; page?: number; page_size?: number }) {
     const res = await api.get<ApiResponse<PaginatedResponse<Resource>>>('/resources/my', { params });
     return res.data;
