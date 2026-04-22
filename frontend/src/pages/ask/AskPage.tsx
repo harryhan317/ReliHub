@@ -56,7 +56,20 @@ const AskPage: React.FC = () => {
       <div className="top-bar">
         <div className="top-bar-title gradient-text">ReliBot 爱问</div>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          <button className="top-bar-btn" onClick={() => { if (isLoggedIn) { aiService.getSessions(1, 20).then((res) => { if (res.data?.items) setSessions(res.data.items); }).catch(() => {}); } setShowHistory(true); }}>📋</button>
+          <button className="top-bar-btn" onClick={() => { 
+            if (isLoggedIn) { 
+              aiService.getSessions(1, 20).then((res) => { 
+                if (res.data?.items) {
+                  setSessions(res.data.items);
+                }
+                setShowHistory(true);
+              }).catch(() => {
+                setShowHistory(true);
+              }); 
+            } else {
+              setShowHistory(true);
+            }
+          }}>📋</button>
           <button className="top-bar-btn" onClick={() => navigate('/notification')} style={{ position: 'relative' }}>
             🔔
             <span style={{ position: 'absolute', top: 2, right: 2, width: 6, height: 6, background: 'var(--color-error)', borderRadius: '50%' }} />
@@ -82,7 +95,18 @@ const AskPage: React.FC = () => {
           </div>
         </motion.div>
 
-        <SectionHeader title="历史对话" action="查看全部" onAction={() => { if (isLoggedIn) { aiService.getSessions(1, 20).then((res) => { if (res.data?.items) setSessions(res.data.items); }).catch(() => {}); } setShowHistory(true); }} />
+        <SectionHeader title="历史对话" action="查看全部" onAction={() => { 
+          if (isLoggedIn) { 
+            aiService.getSessions(1, 20).then((res) => { 
+              if (res.data?.items) setSessions(res.data.items);
+              setShowHistory(true);
+            }).catch(() => {
+              setShowHistory(true);
+            }); 
+          } else {
+            setShowHistory(true);
+          }
+        }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
           {sessions.length > 0 ? sessions.slice(0, 3).map((s, i) => (

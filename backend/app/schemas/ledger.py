@@ -88,13 +88,19 @@ class UserBalanceResponse(BaseModel):
 class AssetPackageResponse(BaseModel):
     """Response schema for asset package"""
     model_config = ConfigDict(from_attributes=True)
-    
+
     id: str
     name: str
     price_beans: int
     quota_mb: int
     discount_rate: float
     created_at: datetime
+
+
+class AssetPackageListResponse(BaseModel):
+    """Response schema for asset package list"""
+    packages: List[AssetPackageResponse]
+    total: int
 
 
 class UserPurchasedAssetResponse(BaseModel):

@@ -6,7 +6,7 @@ import uuid
 from datetime import date, datetime, timezone
 from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, func, select, update
+from sqlalchemy import and_, func, select, update, text
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import BusinessException, ErrorCode
@@ -34,79 +34,153 @@ class InteractionService:
         self.db = db
 
     def like_resource(self, user_id: str, resource_id: str) -> dict:
-        resource = self._get_resource(resource_id)
-        existing = self._find_like(user_id, TargetType.RESOURCE, resource_id)
-        if existing:
-            raise BusinessException(ErrorCode.COM_4005, "您已点赞过该内容，请勿重复操作")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询资源，防止竞态条件
+            resource = self._get_resource_with_lock(resource_id)
+            existing = self._find_like(user_id, TargetType.RESOURCE, resource_id)
+            if existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "您已点赞过该内容，请勿重复操作")
 
-        like = UserLike(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            target_type=TargetType.RESOURCE,
-            target_id=resource_id,
-        )
-        self.db.add(like)
-        
-        # 使用原子操作更新点赞计数
-        stmt = update(Resource).where(Resource.id == resource_id).values(
-            like_count=Resource.like_count + 1
-        )
-        self.db.execute(stmt)
-        
-        self.db.commit()
-        
-        # 重新获取更新后的计数
-        updated_resource = self._get_resource(resource_id)
-        return {"message": "点赞成功", "like_count": updated_resource.like_count}
+            like = UserLike(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                target_type=TargetType.RESOURCE,
+                target_id=resource_id,
+            )
+            self.db.add(like)
+            
+            # 使用原子操作更新点赞计数
+            stmt = update(Resource).where(Resource.id == resource_id).values(
+                like_count=Resource.like_count + 1
+            )
+            self.db.execute(stmt)
+            
+            # 重新获取更新后的计数（在同一事务中）
+            updated_resource = self._get_resource(resource_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "点赞成功", "like_count": updated_resource.like_count}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "点赞操作失败")
 
     def unlike_resource(self, user_id: str, resource_id: str) -> dict:
-        resource = self._get_resource(resource_id)
-        existing = self._find_like(user_id, TargetType.RESOURCE, resource_id)
-        if not existing:
-            raise BusinessException(ErrorCode.COM_4005, "尚未点赞该内容")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询资源，防止竞态条件
+            resource = self._get_resource_with_lock(resource_id)
+            existing = self._find_like(user_id, TargetType.RESOURCE, resource_id)
+            if not existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "尚未点赞该内容")
 
-        self.db.delete(existing)
-        
-        # 使用原子操作更新点赞计数
-        stmt = update(Resource).where(Resource.id == resource_id).values(
-            like_count=func.greatest(Resource.like_count - 1, 0)
-        )
-        self.db.execute(stmt)
-        
-        self.db.commit()
-        
-        # 重新获取更新后的计数
-        updated_resource = self._get_resource(resource_id)
-        return {"message": "取消点赞成功", "like_count": updated_resource.like_count}
+            self.db.delete(existing)
+            
+            # 使用原子操作更新点赞计数
+            stmt = update(Resource).where(Resource.id == resource_id).values(
+                like_count=func.greatest(Resource.like_count - 1, 0)
+            )
+            self.db.execute(stmt)
+            
+            # 重新获取更新后的计数（在同一事务中）
+            updated_resource = self._get_resource(resource_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "取消点赞成功", "like_count": updated_resource.like_count}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "取消点赞操作失败")
 
     def collect_resource(self, user_id: str, resource_id: str) -> dict:
-        self._get_resource(resource_id)
-        existing = self._find_collection(user_id, TargetType.RESOURCE, resource_id)
-        if existing:
-            raise BusinessException(ErrorCode.COM_4005, "您已收藏过该资源")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询资源，防止竞态条件
+            resource = self._get_resource_with_lock(resource_id)
+            existing = self._find_collection(user_id, TargetType.RESOURCE, resource_id)
+            if existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "您已收藏过该资源")
 
-        collection = UserCollection(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            target_type=TargetType.RESOURCE,
-            target_id=resource_id,
-        )
-        self.db.add(collection)
-        self.db.commit()
-        return {"message": "收藏成功"}
+            collection = UserCollection(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                target_type=TargetType.RESOURCE,
+                target_id=resource_id,
+            )
+            self.db.add(collection)
+            
+            # 重新获取收藏状态（在同一事务中）
+            updated_collected = self.check_user_collected(user_id, TargetType.RESOURCE, resource_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "收藏成功", "collected": updated_collected}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "收藏操作失败")
 
     def uncollect_resource(self, user_id: str, resource_id: str) -> dict:
-        self._get_resource(resource_id)
-        existing = self._find_collection(user_id, TargetType.RESOURCE, resource_id)
-        if not existing:
-            raise BusinessException(ErrorCode.COM_4005, "尚未收藏该资源")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询资源，防止竞态条件
+            resource = self._get_resource_with_lock(resource_id)
+            existing = self._find_collection(user_id, TargetType.RESOURCE, resource_id)
+            if not existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "尚未收藏该资源")
 
-        self.db.delete(existing)
-        self.db.commit()
-        return {"message": "取消收藏成功"}
+            self.db.delete(existing)
+            
+            # 重新获取收藏状态（在同一事务中）
+            updated_collected = self.check_user_collected(user_id, TargetType.RESOURCE, resource_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "取消收藏成功", "collected": updated_collected}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "取消收藏操作失败")
 
     def report_resource(self, user_id: str, resource_id: str, reason: str, detail: Optional[str] = None) -> dict:
         self._get_resource(resource_id)
+        
+        # 检查是否已举报过该资源
+        existing = self._find_report(user_id, TargetType.RESOURCE, resource_id)
+        if existing:
+            raise BusinessException(ErrorCode.COM_4005, "您已举报过该资源，请勿重复举报")
+        
         report = UserReport(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -121,35 +195,84 @@ class InteractionService:
         return {"message": "举报已提交，我们会尽快处理"}
 
     def like_topic(self, user_id: str, topic_id: str) -> dict:
-        topic = self._get_topic(topic_id)
-        existing = self._find_like(user_id, TargetType.TOPIC, topic_id)
-        if existing:
-            raise BusinessException(ErrorCode.COM_4005, "您已点赞过该内容，请勿重复操作")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询话题，防止竞态条件
+            topic = self._get_topic_with_lock(topic_id)
+            existing = self._find_like(user_id, TargetType.TOPIC, topic_id)
+            if existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "您已点赞过该内容，请勿重复操作")
 
-        like = UserLike(
-            id=str(uuid.uuid4()),
-            user_id=user_id,
-            target_type=TargetType.TOPIC,
-            target_id=topic_id,
-        )
-        self.db.add(like)
-        topic.like_count += 1
-        self.db.commit()
-        return {"message": "点赞成功", "like_count": topic.like_count}
+            like = UserLike(
+                id=str(uuid.uuid4()),
+                user_id=user_id,
+                target_type=TargetType.TOPIC,
+                target_id=topic_id,
+            )
+            self.db.add(like)
+            
+            # 使用原子操作更新点赞计数
+            stmt = update(Topic).where(Topic.id == topic_id).values(
+                like_count=Topic.like_count + 1
+            )
+            self.db.execute(stmt)
+            
+            # 重新获取更新后的计数（在同一事务中）
+            updated_topic = self._get_topic(topic_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "点赞成功", "like_count": updated_topic.like_count}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "点赞操作失败")
 
     def unlike_topic(self, user_id: str, topic_id: str) -> dict:
-        topic = self._get_topic(topic_id)
-        existing = self._find_like(user_id, TargetType.TOPIC, topic_id)
-        if not existing:
-            raise BusinessException(ErrorCode.COM_4005, "尚未点赞该内容")
+        try:
+            # 开始事务
+            self.db.begin()
+            
+            # 使用数据库行级锁查询话题，防止竞态条件
+            topic = self._get_topic_with_lock(topic_id)
+            existing = self._find_like(user_id, TargetType.TOPIC, topic_id)
+            if not existing:
+                self.db.rollback()
+                raise BusinessException(ErrorCode.COM_4005, "尚未点赞该内容")
 
-        self.db.delete(existing)
-        topic.like_count = max(0, topic.like_count - 1)
-        self.db.commit()
-        return {"message": "取消点赞成功", "like_count": topic.like_count}
+            self.db.delete(existing)
+            
+            # 使用原子操作更新点赞计数
+            stmt = update(Topic).where(Topic.id == topic_id).values(
+                like_count=func.greatest(Topic.like_count - 1, 0)
+            )
+            self.db.execute(stmt)
+            
+            # 重新获取更新后的计数（在同一事务中）
+            updated_topic = self._get_topic(topic_id)
+            
+            # 提交事务
+            self.db.commit()
+            
+            return {"message": "取消点赞成功", "like_count": updated_topic.like_count}
+            
+        except Exception as e:
+            # 发生异常时回滚事务
+            self.db.rollback()
+            if isinstance(e, BusinessException):
+                raise e
+            raise BusinessException(ErrorCode.COM_4000, "取消点赞操作失败")
 
     def collect_topic(self, user_id: str, topic_id: str) -> dict:
-        self._get_topic(topic_id)
+        # 使用数据库行级锁查询话题，防止竞态条件
+        topic = self._get_topic_with_lock(topic_id)
         existing = self._find_collection(user_id, TargetType.TOPIC, topic_id)
         if existing:
             raise BusinessException(ErrorCode.COM_4005, "您已收藏过该话题")
@@ -161,21 +284,40 @@ class InteractionService:
             target_id=topic_id,
         )
         self.db.add(collection)
+        
+        # 重新获取收藏状态（在同一事务中）
+        updated_collected = self.check_user_collected(user_id, TargetType.TOPIC, topic_id)
+        
+        # 提交事务
         self.db.commit()
-        return {"message": "收藏成功"}
+        
+        return {"message": "收藏成功", "collected": updated_collected}
 
     def uncollect_topic(self, user_id: str, topic_id: str) -> dict:
-        self._get_topic(topic_id)
+        # 使用数据库行级锁查询话题，防止竞态条件
+        topic = self._get_topic_with_lock(topic_id)
         existing = self._find_collection(user_id, TargetType.TOPIC, topic_id)
         if not existing:
             raise BusinessException(ErrorCode.COM_4005, "尚未收藏该话题")
 
         self.db.delete(existing)
+        
+        # 重新获取收藏状态（在同一事务中）
+        updated_collected = self.check_user_collected(user_id, TargetType.TOPIC, topic_id)
+        
+        # 提交事务
         self.db.commit()
-        return {"message": "取消收藏成功"}
+        
+        return {"message": "取消收藏成功", "collected": updated_collected}
 
     def report_topic(self, user_id: str, topic_id: str, reason: str, detail: Optional[str] = None) -> dict:
         self._get_topic(topic_id)
+        
+        # 检查是否已举报过该话题
+        existing = self._find_report(user_id, TargetType.TOPIC, topic_id)
+        if existing:
+            raise BusinessException(ErrorCode.COM_4005, "您已举报过该话题，请勿重复举报")
+        
         report = UserReport(
             id=str(uuid.uuid4()),
             user_id=user_id,
@@ -234,6 +376,20 @@ class InteractionService:
             raise BusinessException(ErrorCode.RES_4008, "资源不存在或已被删除")
         return resource
 
+    def _get_resource_with_lock(self, resource_id: str) -> Resource:
+        """获取资源并加锁，防止竞态条件"""
+        query = select(Resource).where(
+            Resource.id == resource_id,
+            Resource.is_deleted == False,
+            Resource.status == ResourceStatus.APPROVED,
+        )
+        # 使用行级锁，防止竞态条件
+        result = self.db.execute(query.with_for_update())
+        resource = result.scalar_one_or_none()
+        if not resource:
+            raise BusinessException(ErrorCode.RES_4008, "资源不存在或已被删除")
+        return resource
+
     def _get_topic(self, topic_id: str) -> Topic:
         query = select(Topic).where(
             Topic.id == topic_id,
@@ -241,6 +397,20 @@ class InteractionService:
             Topic.status == TopicStatus.NORMAL,
         )
         result = self.db.execute(query)
+        topic = result.scalar_one_or_none()
+        if not topic:
+            raise BusinessException(ErrorCode.COM_4006, "话题不存在或已被删除")
+        return topic
+
+    def _get_topic_with_lock(self, topic_id: str) -> Topic:
+        """获取话题并加锁，防止竞态条件"""
+        query = select(Topic).where(
+            Topic.id == topic_id,
+            Topic.is_deleted == False,
+            Topic.status == TopicStatus.NORMAL,
+        )
+        # 使用行级锁，防止竞态条件
+        result = self.db.execute(query.with_for_update())
         topic = result.scalar_one_or_none()
         if not topic:
             raise BusinessException(ErrorCode.COM_4006, "话题不存在或已被删除")
@@ -260,6 +430,16 @@ class InteractionService:
             UserCollection.user_id == user_id,
             UserCollection.target_type == target_type,
             UserCollection.target_id == target_id,
+        )
+        result = self.db.execute(query)
+        return result.scalar_one_or_none()
+
+    def _find_report(self, user_id: str, target_type: TargetType, target_id: str) -> Optional[UserReport]:
+        query = select(UserReport).where(
+            UserReport.user_id == user_id,
+            UserReport.target_type == target_type,
+            UserReport.target_id == target_id,
+            UserReport.status.in_([ReportStatus.PENDING, ReportStatus.REVIEWED]),  # 检查待处理和已处理的举报
         )
         result = self.db.execute(query)
         return result.scalar_one_or_none()
@@ -305,8 +485,16 @@ class CheckinService:
         )
         self.db.add(checkin)
 
-        new_bonus = user.bonus_beans + reward_beans
-        user.bonus_beans = new_bonus
+        # 使用原子操作更新用户积分，避免竞态条件
+        stmt = update(User).where(User.id == user_id).values(
+            bonus_beans=User.bonus_beans + reward_beans
+        )
+        self.db.execute(stmt)
+        
+        # 重新获取更新后的积分
+        user_result = self.db.execute(select(User).where(User.id == user_id))
+        updated_user = user_result.scalar_one()
+        new_bonus = updated_user.bonus_beans
 
         ledger = PointLedger(
             id=str(uuid.uuid4()),

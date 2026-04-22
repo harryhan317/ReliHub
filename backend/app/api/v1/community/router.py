@@ -18,7 +18,7 @@ from app.schemas.community import (
     TopicResponse,
     TopicUpdateRequest,
 )
-from app.schemas.interaction import ReportRequest
+from app.schemas.interaction import LikeOperationResponse, ReportRequest
 from app.services.community_service import PostService, TopicService
 from app.services.interaction_service import InteractionService
 
@@ -202,17 +202,18 @@ def delete_post(
     return {"message": "帖子已删除"}
 
 
-@router.post("/posts/{post_id}/like")
+@router.post("/posts/{post_id}/like", response_model=LikeOperationResponse)
 def like_post(
     post_id: str,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Like a post"""
-    return {"message": "Post liked"}
+    service = InteractionService(db)
+    return service.like_post(current_user.id, post_id)
 
 
-@router.post("/topics/{topic_id}/like")
+@router.post("/topics/{topic_id}/like", response_model=LikeOperationResponse)
 def like_topic(
     topic_id: str,
     db: Session = Depends(get_db),
@@ -223,7 +224,7 @@ def like_topic(
     return service.like_topic(current_user.id, topic_id)
 
 
-@router.delete("/topics/{topic_id}/like")
+@router.delete("/topics/{topic_id}/like", response_model=LikeOperationResponse)
 def unlike_topic(
     topic_id: str,
     db: Session = Depends(get_db),

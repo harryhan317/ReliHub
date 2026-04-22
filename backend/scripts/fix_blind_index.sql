@@ -1,0 +1,13 @@
+UPDATE users SET phone_blind_index = '88db0db5e8892c9d' WHERE phone = '13800000001';
+UPDATE users SET phone_blind_index = 'f2aeb4369fd65582' WHERE phone = '13800000002';
+UPDATE users SET phone_blind_index = 'cc26e9b442795f40' WHERE phone = '13800000011';
+UPDATE users SET phone_blind_index = '86b59183f619156e' WHERE phone = '13800000012';
+UPDATE users SET phone_blind_index = '45d330ca060b73df' WHERE phone = '13800000013';
+UPDATE users SET phone_blind_index = 'd3cd5a8f06ee0eba' WHERE phone = '13800000014';
+UPDATE users SET phone_blind_index = 'ac55123b49167298' WHERE phone = '13800000015';
+UPDATE users SET phone_blind_index = '3ea0ec53cbcb1468' WHERE phone = '13800000016';
+UPDATE users SET phone_blind_index = '300e300cfd6b201e' WHERE phone = '13800000017';
+UPDATE users SET phone_blind_index = 'd712aeec900657a7' WHERE phone = '13800000018';
+UPDATE users SET phone_blind_index = '4d602fe3dcda8b03' WHERE phone = '13800000019';
+UPDATE users SET phone_blind_index = '389ea8d24199dc1a' WHERE phone = '13800000020';
+UPDATE users SET phone_blind_index = '9fdf4f70f64eae22' WHERE phone = '13800000021';

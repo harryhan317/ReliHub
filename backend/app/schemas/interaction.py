@@ -23,7 +23,7 @@ class ReportReason(str, Enum):
 
 
 class ReportRequest(BaseModel):
-    reason: str = Field(..., min_length=1, max_length=50, description="Report reason")
+    reason: ReportReason = Field(..., description="Report reason")
     detail: Optional[str] = Field(None, max_length=1000, description="Additional details")
 
 
@@ -35,6 +35,18 @@ class LikeResponse(BaseModel):
     target_type: TargetType
     target_id: str
     created_at: datetime
+
+
+class LikeOperationResponse(BaseModel):
+    """点赞操作响应模型"""
+    message: str
+    like_count: int
+
+
+class CollectionOperationResponse(BaseModel):
+    """收藏操作响应模型"""
+    message: str
+    collected: bool
 
 
 class CollectionResponse(BaseModel):

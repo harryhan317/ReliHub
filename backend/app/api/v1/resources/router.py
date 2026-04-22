@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db, require_admin
 from app.models.administrators import AdminUser
 from app.models.users import User
-from app.schemas.interaction import ReportRequest
+from app.schemas.interaction import LikeOperationResponse, ReportRequest
 from app.schemas.resource import (
     ResourceCreateRequest,
     ResourceListItem,
@@ -185,7 +185,7 @@ def increment_view(
     return {"message": "View count incremented"}
 
 
-@router.post("/{resource_id}/like")
+@router.post("/{resource_id}/like", response_model=LikeOperationResponse)
 def like_resource(
     resource_id: str,
     db: Session = Depends(get_db),
@@ -196,7 +196,7 @@ def like_resource(
     return service.like_resource(current_user.id, resource_id)
 
 
-@router.delete("/{resource_id}/like")
+@router.delete("/{resource_id}/like", response_model=LikeOperationResponse)
 def unlike_resource(
     resource_id: str,
     db: Session = Depends(get_db),
