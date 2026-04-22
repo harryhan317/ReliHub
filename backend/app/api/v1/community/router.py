@@ -18,7 +18,9 @@ from app.schemas.community import (
     TopicResponse,
     TopicUpdateRequest,
 )
+from app.schemas.interaction import ReportRequest
 from app.services.community_service import PostService, TopicService
+from app.services.interaction_service import InteractionService
 
 router = APIRouter(tags=["社区管理"])
 
@@ -208,3 +210,59 @@ def like_post(
 ):
     """Like a post"""
     return {"message": "Post liked"}
+
+
+@router.post("/topics/{topic_id}/like")
+def like_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Like a topic"""
+    service = InteractionService(db)
+    return service.like_topic(current_user.id, topic_id)
+
+
+@router.delete("/topics/{topic_id}/like")
+def unlike_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Unlike a topic"""
+    service = InteractionService(db)
+    return service.unlike_topic(current_user.id, topic_id)
+
+
+@router.post("/topics/{topic_id}/collect")
+def collect_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Collect/bookmark a topic"""
+    service = InteractionService(db)
+    return service.collect_topic(current_user.id, topic_id)
+
+
+@router.delete("/topics/{topic_id}/collect")
+def uncollect_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Uncollect/remove bookmark for a topic"""
+    service = InteractionService(db)
+    return service.uncollect_topic(current_user.id, topic_id)
+
+
+@router.post("/topics/{topic_id}/report")
+def report_topic(
+    topic_id: str,
+    request: ReportRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Report a topic"""
+    service = InteractionService(db)
+    return service.report_topic(current_user.id, topic_id, request.reason, request.detail)

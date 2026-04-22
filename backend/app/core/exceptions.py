@@ -61,6 +61,7 @@ class ErrorCode(str, Enum):
     COM_4003 = "COM_4003"  # 向强制关闭锁定或终结的帖子回发增量
     COM_4004 = "COM_4004"  # 悬赏标的物尝试投向本人进行自我采纳
     COM_4005 = "COM_4005"  # 连续等幂冲按捕捉到的重复点赞干预
+    COM_4006 = "COM_4006"  # 话题不存在或已被删除
     COM_4007 = "COM_4007"  # 针对已经被打上最佳标识的话题重发悬赏令
 
     # Feedback (反馈模块)
@@ -122,6 +123,7 @@ _HTTP_STATUS_MAP = {
     ErrorCode.COM_4003: 403,
     ErrorCode.COM_4004: 403,
     ErrorCode.COM_4005: 400,
+    ErrorCode.COM_4006: 404,
     ErrorCode.COM_4007: 400,
     ErrorCode.SYS_4290: 429,
     ErrorCode.SYS_5000: 500,
@@ -178,6 +180,7 @@ _ERROR_MESSAGES = {
     ErrorCode.COM_4003: "该话题已关闭，请选择其他话题参与讨论",
     ErrorCode.COM_4004: "系统规则不允许采纳本人发布的回复作为最佳答案",
     ErrorCode.COM_4005: "您已点赞过该内容，请勿重复操作",
+    ErrorCode.COM_4006: "话题不存在或已被删除",
     ErrorCode.COM_4007: "该话题已有最佳答案，不可重复采纳",
     ErrorCode.SYS_4290: "操作过于频繁，请稍后重试",
     ErrorCode.SYS_5000: "服务器处理异常，请稍后重试",

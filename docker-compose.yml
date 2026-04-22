@@ -48,7 +48,7 @@ services:
       API_V1_STR: /api/v1
       SECRET_KEY: super-secret-key-change-me-in-production
       PHONE_BLIND_INDEX_KEY: independent-blind-index-key-change-me
-      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000","http://web:80","http://admin:80"]'
       COS_SECRET_ID: your_cos_secret_id
       COS_SECRET_KEY: your_cos_secret_key
       COS_REGION: ap-shanghai
@@ -61,6 +61,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
 
   backend-init:
     build:
@@ -81,7 +87,7 @@ services:
       API_V1_STR: /api/v1
       SECRET_KEY: super-secret-key-change-me-in-production
       PHONE_BLIND_INDEX_KEY: independent-blind-index-key-change-me
-      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000"]'
+      BACKEND_CORS_ORIGINS: '["http://localhost:5179","http://localhost:80","http://localhost","http://localhost:3000","http://web:80","http://admin:80"]'
       COS_SECRET_ID: your_cos_secret_id
       COS_SECRET_KEY: your_cos_secret_key
       COS_REGION: ap-shanghai
@@ -96,6 +102,8 @@ services:
         condition: service_healthy
     entrypoint: >
       bash -c "
+        echo 'Waiting for database to be ready...' &&
+        sleep 10 &&
         echo 'Initializing database extensions...' &&
         PYTHONPATH=/app python3 scripts/init_extensions.py &&
         echo 'Running database migrations...' &&
@@ -104,6 +112,8 @@ services:
         PYTHONPATH=/app python3 scripts/create_seed_data.py &&
         echo 'Initialization complete!'
       "
+    profiles:
+      - init
 
   web:
     build:
@@ -111,8 +121,16 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3000:80"
+    environment:
+      VITE_API_BASE_URL: /api/v1
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   admin:
     build:
@@ -120,9 +138,42 @@ services:
       dockerfile: Dockerfile
     ports:
       - "5179:80"
+    environment:
+      VITE_API_BASE_URL: /api/v1
     depends_on:
       - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # 可选：自动启动器服务（用于开发环境）
+  frontend-auto-starter:
+    build:
+      context: .
+      dockerfile: Dockerfile.auto-starter
+    ports:
+      - "8080:8080"
+    environment:
+      FRONTEND_PORT: 3000
+      PROXY_PORT: 8080
+      MAX_STARTUP_TIME: 30
+      HEALTH_CHECK_INTERVAL: 5
+      FRONTEND_DIR: /app/frontend
+    volumes:
+      - ./frontend:/app/frontend
+      - /app/frontend/node_modules
+    depends_on:
+      - web
+    profiles:
+      - dev
 
 volumes:
   postgres_data:
   redis_data:
+
+networks:
+  default:
+    name: relihub-network

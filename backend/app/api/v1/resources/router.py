@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.core.deps import get_current_user, get_db, require_admin
 from app.models.administrators import AdminUser
 from app.models.users import User
+from app.schemas.interaction import ReportRequest
 from app.schemas.resource import (
     ResourceCreateRequest,
     ResourceListItem,
@@ -18,6 +19,7 @@ from app.schemas.resource import (
     ResourceUpdateRequest,
 )
 from app.services.admin_service import AdminService
+from app.services.interaction_service import InteractionService
 from app.services.resource_service import ResourceService
 
 router = APIRouter(tags=["资源管理"])
@@ -181,3 +183,59 @@ def increment_view(
     service = ResourceService(db)
     service.increment_view(resource_id)
     return {"message": "View count incremented"}
+
+
+@router.post("/{resource_id}/like")
+def like_resource(
+    resource_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Like a resource"""
+    service = InteractionService(db)
+    return service.like_resource(current_user.id, resource_id)
+
+
+@router.delete("/{resource_id}/like")
+def unlike_resource(
+    resource_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Unlike a resource"""
+    service = InteractionService(db)
+    return service.unlike_resource(current_user.id, resource_id)
+
+
+@router.post("/{resource_id}/collect")
+def collect_resource(
+    resource_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Collect/bookmark a resource"""
+    service = InteractionService(db)
+    return service.collect_resource(current_user.id, resource_id)
+
+
+@router.delete("/{resource_id}/collect")
+def uncollect_resource(
+    resource_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Uncollect/remove bookmark for a resource"""
+    service = InteractionService(db)
+    return service.uncollect_resource(current_user.id, resource_id)
+
+
+@router.post("/{resource_id}/report")
+def report_resource(
+    resource_id: str,
+    request: ReportRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Report a resource"""
+    service = InteractionService(db)
+    return service.report_resource(current_user.id, resource_id, request.reason, request.detail)

@@ -32,6 +32,14 @@ from .ai_message import AIMessage
 from .ai_session import AISession
 from .feedback import Feedback, FeedbackStatus
 from .file_meta import FileMeta, FileStatus, FileUsage, LifecycleStatus, TargetType
+from .interaction import (
+    ReportReason,
+    ReportStatus,
+    UserCheckin,
+    UserCollection,
+    UserLike,
+    UserReport,
+)
 from .ledger import (
     AssetPackage,
     AttemptedTransaction,
@@ -64,6 +72,12 @@ __all__ = [
     "FileUsage",
     "LifecycleStatus",
     "TargetType",
+    "ReportReason",
+    "ReportStatus",
+    "UserCheckin",
+    "UserCollection",
+    "UserLike",
+    "UserReport",
     "AssetPackage",
     "AttemptedTransaction",
     "OrderType",

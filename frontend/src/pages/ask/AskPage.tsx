@@ -21,12 +21,6 @@ const AskPage: React.FC = () => {
   const [showHistory, setShowHistory] = useState(false);
   const [sessions, setSessions] = useState<Array<{ id: string; title: string; message_count: number; updated_at: string }>>([]);
 
-  const historyChats = [
-    { title: '电容降额设计规范', tag: '3轮', tagType: 'accent' as const, time: '今天 14:30' },
-    { title: 'HALT测试流程咨询', tag: '7轮', tagType: 'accent' as const, time: '昨天 09:15' },
-    { title: 'FMEA分析方法', tag: '已解决', tagType: 'success' as const, time: '4月10日' },
-  ];
-
   const suggestedQuestions = [
     '如何进行电子元器件的降额设计？',
     '温度循环试验的常见失效模式有哪些？',
@@ -62,7 +56,7 @@ const AskPage: React.FC = () => {
       <div className="top-bar">
         <div className="top-bar-title gradient-text">ReliBot 爱问</div>
         <div style={{ display: 'flex', gap: 'var(--spacing-sm)' }}>
-          <button className="top-bar-btn" onClick={() => setShowHistory(true)}>📋</button>
+          <button className="top-bar-btn" onClick={() => { if (isLoggedIn) { aiService.getSessions(1, 20).then((res) => { if (res.data?.items) setSessions(res.data.items); }).catch(() => {}); } setShowHistory(true); }}>📋</button>
           <button className="top-bar-btn" onClick={() => navigate('/notification')} style={{ position: 'relative' }}>
             🔔
             <span style={{ position: 'absolute', top: 2, right: 2, width: 6, height: 6, background: 'var(--color-error)', borderRadius: '50%' }} />
@@ -88,27 +82,31 @@ const AskPage: React.FC = () => {
           </div>
         </motion.div>
 
-        <SectionHeader title="历史对话" action="查看全部" onAction={() => setShowHistory(true)} />
+        <SectionHeader title="历史对话" action="查看全部" onAction={() => { if (isLoggedIn) { aiService.getSessions(1, 20).then((res) => { if (res.data?.items) setSessions(res.data.items); }).catch(() => {}); } setShowHistory(true); }} />
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>
-          {historyChats.map((chat, i) => (
+          {sessions.length > 0 ? sessions.slice(0, 3).map((s, i) => (
             <motion.div
-              key={chat.title}
+              key={s.id}
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
             >
-              <Card onClick={() => navigate('/chat')} style={{ cursor: 'pointer' }}>
+              <Card onClick={() => navigate(`/chat/${s.id}`)} style={{ cursor: 'pointer' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ fontWeight: 500 }}>{chat.title}</div>
-                  <Tag variant={chat.tagType}>{chat.tag}</Tag>
+                  <div style={{ fontWeight: 500 }}>{s.title || '未命名对话'}</div>
+                  <Tag variant="accent">{s.message_count}条</Tag>
                 </div>
                 <div style={{ fontSize: 'var(--font-size-caption)', color: 'var(--color-text-tertiary)', marginTop: 'var(--spacing-xs)' }}>
-                  {chat.time}
+                  {s.updated_at ? new Date(s.updated_at).toLocaleDateString('zh-CN') : ''}
                 </div>
               </Card>
             </motion.div>
-          ))}
+          )) : (
+            <div style={{ textAlign: 'center', padding: 'var(--spacing-xl) 0', color: 'var(--color-text-muted)', fontSize: 'var(--font-size-caption)' }}>
+              暂无历史对话，开始你的第一次提问吧
+            </div>
+          )}
         </div>
 
         <div style={{ marginTop: 'var(--spacing-xl)', display: 'flex', flexDirection: 'column', gap: 'var(--spacing-sm)' }}>

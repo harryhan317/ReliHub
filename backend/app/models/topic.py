@@ -54,6 +54,7 @@ class Topic(Base):
     # ── Statistics ────────────────────────────────────────────────────────────
     view_count: Mapped[int] = mapped_column(Integer, default=0)
     post_count: Mapped[int] = mapped_column(Integer, default=0)
+    like_count: Mapped[int] = mapped_column(Integer, default=0)
     heat_score: Mapped[float] = mapped_column(Float, default=0.0, index=True)  # Heat index
 
     # ── Anonymization (for deleted users) ─────────────────────────────────────

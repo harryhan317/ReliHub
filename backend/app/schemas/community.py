@@ -84,6 +84,7 @@ class TopicResponse(BaseModel):
     status: TopicStatus
     view_count: int
     post_count: int
+    like_count: int
     heat_score: float
     anonymized_user_hash: Optional[str] = None
     created_at: datetime
@@ -102,6 +103,7 @@ class TopicListItem(BaseModel):
     bounty_status: BountyStatus
     post_count: int
     view_count: int
+    like_count: int
     heat_score: float
     created_at: datetime
 

@@ -32,12 +32,17 @@ const MyPage: React.FC = () => {
   const handleCheckin = async () => {
     if (isGuest) { checkAction('open_my'); return; }
     try {
-      await ledgerService.checkin();
-      setCheckedIn(true);
-      setShowCheckin(true);
-      showToast('签到成功！', 'success');
-    } catch {
-      showToast('签到失败', 'error');
+      const res: any = await ledgerService.checkin();
+      if (res?.already_checked_in) {
+        setCheckedIn(true);
+        showToast('今日已签到', 'info');
+      } else {
+        setCheckedIn(true);
+        setShowCheckin(true);
+        showToast('签到成功！', 'success');
+      }
+    } catch (err: any) {
+      showToast(err?.message || '签到失败，请稍后重试', 'error');
     }
   };
 
