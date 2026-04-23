@@ -6,6 +6,7 @@ import { useUIStore } from '../../store/uiStore';
 import { useGuestGuard } from '../../store/useGuestGuard';
 import { useGuestStore } from '../../store/guestStore';
 import { Modal } from '../../components/ui/Modal';
+import { GuestRegisterModal } from '../../components/ui/GuestRegisterModal';
 import { aiService } from '../../services/aiService';
 
 const MAX_INPUT_LENGTH = 2000;
@@ -308,8 +309,8 @@ const ChatPage: React.FC = () => {
 
     if (msg.id) {
       try {
-        if (type === 'like') await aiService.likeMessage(msg.id);
-        else await aiService.dislikeMessage(msg.id);
+        if (type === 'like') await aiService.likeMessage(sessionId, msg.id);
+        else await aiService.dislikeMessage(sessionId, msg.id);
       } catch { /* silent */ }
     }
   };

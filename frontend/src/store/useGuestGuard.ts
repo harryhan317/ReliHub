@@ -63,11 +63,17 @@ export const useGuestGuard = () => {
       return true;
     }
 
-    const restrictedActions = ['download', 'collect', 'like', 'comment', 'upload', 'new_topic', 'open_my', 'reply', 'report'];
+    const restrictedActions = ['download', 'collect', 'like', 'comment', 'upload', 'new_topic', 'reply', 'report'];
     if (restrictedActions.includes(action)) {
       if (guestStore.shouldShowGuide(action)) {
         setGuideModal({ open: true, source: action, reason });
       }
+      return false;
+    }
+
+    // 特殊处理：open_my 每次点击都显示提示页，但不需要记录时间
+    if (action === 'open_my') {
+      setGuideModal({ open: true, source: action, reason });
       return false;
     }
 

@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 
 const WELCOME_LAST_VISIT_KEY = 'relihub_last_visit';
 const WELCOME_HAS_SEEN_KEY = 'relihub_welcome_seen';
@@ -11,7 +10,7 @@ const WelcomePage: React.FC = () => {
   const touchStartYRef = useRef(0);
   const [shouldShow, setShouldShow] = useState(false);
   const [displayDuration, setDisplayDuration] = useState(5000);
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const proceededRef = useRef(false);
 
   const handleProceed = useCallback(() => {
@@ -48,9 +47,10 @@ const WelcomePage: React.FC = () => {
   useEffect(() => {
     if (!shouldShow) return;
 
-    timerRef.current = setTimeout(() => {
-      handleProceed();
-    }, displayDuration);
+    // 注释掉自动跳转逻辑，等待用户操作
+    // timerRef.current = setTimeout(() => {
+    //   handleProceed();
+    // }, displayDuration);
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
@@ -88,29 +88,26 @@ const WelcomePage: React.FC = () => {
     >
       <div className="mesh-bg" />
       <div className="welcome-content">
-        <motion.div
-          className="welcome-logo"
-          animate={{ y: [0, -6, 0] }}
-          transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-        >
-          R
-        </motion.div>
-        <div className="welcome-title gradient-text">ReliHub</div>
-        <div className="welcome-subtitle">
+        <div className="welcome-logo-wrapper">
+          <div className="welcome-logo">R</div>
+        </div>
+        <div className="welcome-title gradient-text welcome-anim-text-1">ReliHub</div>
+        <div className="welcome-product-code welcome-anim-text-2">ReliBot</div>
+        <div className="welcome-subtitle welcome-anim-slogan">
           电子产品可靠性AI社区<br />专业 · 智能 · 共享
         </div>
-        <div className="welcome-quote">"可靠性是设计出来的，不是测试出来的"</div>
+        <div className="welcome-quote welcome-anim-slogan">"可靠性是设计出来的，不是测试出来的"</div>
         <button
-          className="btn btn-primary btn-lg btn-block"
-          onClick={(e) => { e.stopPropagation(); handleProceed(); }}
+          className="btn btn-primary btn-lg btn-block welcome-anim-fadein"
+          onClick={(e) => { e.stopPropagation(); navigate('/login'); }}
         >
-          进入 ReliHub
+          欢迎注册/登录
         </button>
         <div
-          className="welcome-skip"
+          className="welcome-skip welcome-anim-fadein"
           onClick={(e) => { e.stopPropagation(); handleProceed(); }}
         >
-          跳过，随便看看 →
+          路过，先来看看 →
         </div>
       </div>
     </div>

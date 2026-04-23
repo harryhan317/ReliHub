@@ -44,7 +44,6 @@ const TopicDetailPage: React.FC = () => {
     author_level: '熟手',
     reply_count: 12,
     like_count: 28,
-    dislike_count: 1,
     time: '2小时前发布',
   });
 
@@ -78,15 +77,14 @@ const TopicDetailPage: React.FC = () => {
             title: d.title,
             content: d.content || '',
             tags: d.tags?.map((t: any) => ({ text: typeof t === 'string' ? t : t.text, variant: 'accent' as const })) || [],
-            author_name: d.author_name || d.author?.nickname || '匿名',
-            author_level: d.author_level || d.author?.rank || '',
+            author_name: d.author_name || '匿名',
+            author_level: d.author_level || '',
             reply_count: d.reply_count || 0,
             like_count: d.like_count || 0,
-            dislike_count: d.dislike_count || 0,
             time: d.created_at ? new Date(d.created_at).toLocaleDateString() : '',
           });
-          setLiked(d.is_liked || false);
-          setCollected(d.is_collected || false);
+          setLiked(false);
+          setCollected(false);
         }
       }).catch(() => {}).finally(() => setLoading(false));
 
@@ -94,8 +92,8 @@ const TopicDetailPage: React.FC = () => {
         if (res.data?.items) {
           setReplies(res.data.items.map((r: any) => ({
             id: r.id,
-            author_name: r.author_name || r.author?.nickname || '匿名',
-            author_level: r.author_level || r.author?.rank || '',
+            author_name: r.author_name || '匿名',
+            author_level: r.author_level || '',
             content: r.content,
             like_count: r.like_count || 0,
             is_best: r.is_best || false,
