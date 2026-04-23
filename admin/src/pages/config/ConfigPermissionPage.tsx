@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { adminService } from '@/services/adminService';
+import { useAdminStore } from '@/store/adminStore';
 
 const LEVELS = ['游客', '新兵', '菜鸟', '入门', '熟手', '老炮', '达人', '专家'];
 
@@ -13,22 +14,43 @@ const PERMISSIONS = [
   { key: 'expert_service', label: '提供专家咨询服务', type: 'toggle', defaults: [false, false, false, false, false, false, false, true] },
 ];
 
-const ADMIN_PERMISSIONS = [
-  { key: 'content_audit', label: '内容审核（资源/社区/举报）', admin: true, superAdmin: true },
-  { key: 'user_view', label: '用户列表查看/详情查看', admin: true, superAdmin: true },
-  { key: 'user_penalty', label: '用户违规处置', admin: false, superAdmin: true },
-  { key: 'security_log', label: '安全日志查看', admin: true, superAdmin: true },
-  { key: 'param_config', label: '参数配置（§5各节）', admin: false, superAdmin: true },
-  { key: 'admin_management', label: '管理员账号管理', admin: false, superAdmin: true },
-  { key: 'anti_crawl_config', label: '反爬/反刷规则配置', admin: false, superAdmin: true },
-  { key: 'rate_limit_config', label: '限流配置', admin: false, superAdmin: true },
+const ADMIN_PERMISSIONS_KEYS = [
+  'content_audit', 'user_view', 'user_penalty', 'security_log',
+  'param_config', 'admin_management', 'anti_crawl_config', 'rate_limit_config',
 ];
 
+const ADMIN_PERMISSION_LABELS: Record<string, string> = {
+  content_audit: '内容审核（资源/社区/举报）',
+  user_view: '用户列表查看/详情查看',
+  user_penalty: '用户违规处置',
+  security_log: '安全日志查看',
+  param_config: '参数配置',
+  admin_management: '管理员账号管理',
+  anti_crawl_config: '反爬/反刷规则配置',
+  rate_limit_config: '限流配置',
+};
+
+const ADMIN_PERM_DEFAULTS: Record<string, boolean> = {
+  content_audit: true,
+  user_view: true,
+  user_penalty: false,
+  security_log: true,
+  param_config: false,
+  admin_management: false,
+  anti_crawl_config: false,
+  rate_limit_config: false,
+};
+
 export default function ConfigPermissionPage() {
+  const { adminUser } = useAdminStore();
+  const isSuperAdmin = adminUser?.role === 'SUPER_ADMIN';
+
   const [configs, setConfigs] = useState<Record<string, string>>({});
+  const [adminPerms, setAdminPerms] = useState<Record<string, boolean>>({ ...ADMIN_PERM_DEFAULTS });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
+  const [editingAdminPerms, setEditingAdminPerms] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
 
   useEffect(() => {
@@ -37,10 +59,21 @@ export default function ConfigPermissionPage() {
         const map: Record<string, string> = {};
         res.configs?.forEach((item) => { map[item.config_key] = item.config_value; });
         setConfigs(map);
+
+        if (isSuperAdmin) {
+          const adminPermMap: Record<string, boolean> = { ...ADMIN_PERM_DEFAULTS };
+          ADMIN_PERMISSIONS_KEYS.forEach((key) => {
+            const cfgKey = `perm_${key}_admin`;
+            if (map[cfgKey] !== undefined) {
+              adminPermMap[key] = map[cfgKey] === 'true';
+            }
+          });
+          setAdminPerms(adminPermMap);
+        }
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, []);
+  }, [isSuperAdmin]);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -94,6 +127,30 @@ export default function ConfigPermissionPage() {
     }
   }, [configs, showToast]);
 
+  const handleSaveAdminPerms = useCallback(async () => {
+    setSaving(true);
+    try {
+      for (const key of ADMIN_PERMISSIONS_KEYS) {
+        await adminService.updateSystemConfig(`perm_${key}_admin`, String(adminPerms[key]));
+      }
+      showToast('管理员权限配置已保存', 'success');
+      setEditingAdminPerms(false);
+    } catch {
+      showToast('保存失败', 'error');
+    } finally {
+      setSaving(false);
+    }
+  }, [adminPerms, showToast]);
+
+  const handleResetAdminPerms = () => {
+    setAdminPerms({ ...ADMIN_PERM_DEFAULTS });
+    showToast('已恢复到默认值，请点击"保存管理员权限"以生效', 'success');
+  };
+
+  const toggleAdminPerm = (key: string) => {
+    setAdminPerms((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
   const getValue = (permKey: string, levelIdx: number, defaults: string[] | boolean[]) => {
     const cfgKey = `perm_${permKey}_${levelIdx}`;
     if (configs[cfgKey] !== undefined) return configs[cfgKey];
@@ -111,7 +168,7 @@ export default function ConfigPermissionPage() {
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>功能权限配置（§5.3）</span>
+          <span>功能权限配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>
@@ -185,7 +242,23 @@ export default function ConfigPermissionPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">运营权限矩阵（管理员/超级管理员）</div>
+        <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>运营权限矩阵（管理员/超级管理员）</span>
+          {isSuperAdmin && !editingAdminPerms && (
+            <button className="btn btn-primary btn-sm" onClick={() => setEditingAdminPerms(true)}>
+              编辑管理员权限
+            </button>
+          )}
+          {editingAdminPerms && (
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button className="btn btn-sm" onClick={() => setEditingAdminPerms(false)} disabled={saving}>取消</button>
+              <button className="btn btn-sm" onClick={handleResetAdminPerms} disabled={saving}>恢复默认</button>
+              <button className="btn btn-primary btn-sm" onClick={handleSaveAdminPerms} disabled={saving}>
+                {saving ? '保存中...' : '保存管理员权限'}
+              </button>
+            </div>
+          )}
+        </div>
         <div style={{ overflowX: 'auto' }}>
           <table className="data-table" style={{ boxShadow: 'none' }}>
             <thead>
@@ -196,23 +269,40 @@ export default function ConfigPermissionPage() {
               </tr>
             </thead>
             <tbody>
-              {ADMIN_PERMISSIONS.map((perm) => (
-                <tr key={perm.key}>
-                  <td>{perm.label}</td>
+              {ADMIN_PERMISSIONS_KEYS.map((key) => (
+                <tr key={key}>
+                  <td>{ADMIN_PERMISSION_LABELS[key]}</td>
                   <td style={{ textAlign: 'center' }}>
-                    {perm.admin ? <span style={{ color: '#52c41a' }}>✅</span> : <span style={{ color: '#ff4d4f' }}>❌</span>}
+                    {editingAdminPerms ? (
+                      <input
+                        type="checkbox"
+                        checked={adminPerms[key]}
+                        onChange={() => toggleAdminPerm(key)}
+                      />
+                    ) : (
+                      adminPerms[key]
+                        ? <span style={{ color: '#52c41a' }}>✅</span>
+                        : <span style={{ color: '#ff4d4f' }}>❌</span>
+                    )}
                   </td>
                   <td style={{ textAlign: 'center' }}>
-                    {perm.superAdmin ? <span style={{ color: '#52c41a' }}>✅</span> : <span style={{ color: '#ff4d4f' }}>❌</span>}
+                    <span style={{ color: '#52c41a' }}>✅</span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
-          管理员/超级管理员权限固定，不可自定义。S0级参数（AI问答/等级体系/功能权限/可可豆奖惩/AI模型）仅超级管理员可修改
-        </div>
+        {editingAdminPerms && (
+          <div style={{ marginTop: 8, color: '#1890ff', fontSize: 12 }}>
+            ℹ️ 当前以超级管理员身份编辑管理员权限，修改后管理员将获得或失去相应功能访问权限
+          </div>
+        )}
+        {!isSuperAdmin && (
+          <div style={{ marginTop: 8, color: '#999', fontSize: 12 }}>
+            管理员权限配置仅超级管理员可修改。超级管理员拥有全部权限，无需配置。
+          </div>
+        )}
       </div>
     </>
   );

@@ -46,6 +46,21 @@ export default function ConfigDownloadPackPage() {
     }
   }, [configs, showToast]);
 
+  const PACK_DEFAULTS: Record<string, string> = {
+    pack_discount_price: '80',
+    pack_discount_capacity: '100',
+    pack_discount_rate: '0.85',
+    pack_premium_price: '350',
+    pack_premium_capacity: '500',
+    pack_premium_rate: '0.70',
+    pack_capacity_stackable: 'false',
+  };
+
+  const handleReset = () => {
+    setConfigs((p) => ({ ...p, ...PACK_DEFAULTS }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const getVal = (key: string, defaultVal: string) => configs[key] || defaultVal;
 
   const renderField = (key: string, label: string, defaultVal: string, unit: string, min?: number, max?: number) => (
@@ -87,11 +102,12 @@ export default function ConfigDownloadPackPage() {
     <>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0 }}>下载扩充包定价配置（§5.11）</h3>
+        <h3 style={{ margin: 0 }}>下载扩充包定价配置</h3>
         <div style={{ display: 'flex', gap: 8 }}>
           {editing ? (
             <>
               <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+              <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
               <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? '保存中...' : '保存配置'}
               </button>

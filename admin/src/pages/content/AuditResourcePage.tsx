@@ -142,6 +142,31 @@ export default function AuditResourcePage() {
   const totalPages = Math.ceil(total / 20);
   const pendingCount = resources.filter((r) => r.status === 'PENDING_REVIEW').length;
 
+  const handleExport = () => {
+    if (filteredResources.length === 0) {
+      showToast('没有可导出的数据', 'error');
+      return;
+    }
+    const headers = ['ID', '资源标题', '分类', '定价(可可豆)', '状态', '提交时间'];
+    const rows = filteredResources.map((r) => [
+      r.id,
+      r.title,
+      categoryMap[r.category_id] || r.category_id,
+      r.price?.toString() || '0',
+      statusMap[r.status]?.label || r.status,
+      formatDate(r.created_at),
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `资源审核_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('导出成功', 'success');
+  };
+
   return (
     <>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
@@ -167,7 +192,7 @@ export default function AuditResourcePage() {
               批量操作（{selectedIds.size}）
             </button>
           )}
-          <button className="btn btn-sm">📥 导出</button>
+          <button className="btn btn-sm" onClick={handleExport}>📥 导出</button>
         </div>
       </div>
 

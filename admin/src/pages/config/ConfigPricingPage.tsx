@@ -96,7 +96,7 @@ export default function ConfigPricingPage() {
 
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>资源定价区间配置（§5.10 M5-F026/F027）</span>
+          <span>资源定价区间配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>
@@ -130,7 +130,7 @@ export default function ConfigPricingPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">基础资源标识（§5.10）</div>
+        <div className="config-card-title">基础资源标识</div>
         <div style={{ padding: '8px 12px', background: '#f6ffed', borderRadius: 6, fontSize: 13, color: '#389e0d', marginBottom: 12 }}>
           📌 管理员可在上传资源时通过勾选 is_seed=true 将资源标注为"基础资源"。基础资源仍须具备面值定价，在用户等级对应的权益额度内下载时，下载者不消耗可可豆。
         </div>

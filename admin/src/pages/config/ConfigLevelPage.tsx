@@ -80,8 +80,14 @@ export default function ConfigLevelPage() {
 
   const getLevelMin = (lv: typeof LEVELS[0]) => configs[`level_${lv.key}_min`] || String(lv.min);
   const getLevelMax = (lv: typeof LEVELS[0]) => {
-    if (lv.max === null) return '无上限';
+    if (lv.max === null) return null;
     return configs[`level_${lv.key}_max`] || String(lv.max);
+  };
+  const getLevelWarning = (lv: typeof LEVELS[0]) => `≤${getLevelMin(lv)}`;
+  const getUpgradeThreshold = (lv: typeof LEVELS[0]) => {
+    const max = getLevelMax(lv);
+    if (max === null) return null;
+    return `≥${parseInt(max) + 1}`;
   };
   const getDemotionThreshold = (lv: typeof LEVELS[0]) => {
     const min = parseInt(getLevelMin(lv));
@@ -99,7 +105,7 @@ export default function ConfigLevelPage() {
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>等级体系与信誉分阈值配置（§5.2）</span>
+          <span>等级体系与信誉分阈值配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>
@@ -162,8 +168,14 @@ export default function ConfigLevelPage() {
                       )
                     )}
                   </td>
-                  <td>{lv.upgrade !== null ? `≥${lv.upgrade}` : (lv.key === 'daren' ? '信誉分≥5000时提醒申请专家' : '需申请认证')}</td>
-                  <td>{lv.warning}</td>
+                  <td>
+                    {lv.max === null ? (
+                      lv.key === 'daren' ? '信誉分≥5000时提醒申请专家' : '需申请认证'
+                    ) : (
+                      getUpgradeThreshold(lv)
+                    )}
+                  </td>
+                  <td>{lv.key === 'xinbing' ? '-' : getLevelWarning(lv)}</td>
                   <td>{getDemotionThreshold(lv)}</td>
                 </tr>
               ))}

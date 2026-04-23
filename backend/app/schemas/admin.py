@@ -57,7 +57,7 @@ import re
 class SystemConfigUpdateRequest(BaseModel):
     """Request schema for updating system config"""
     config_key: str = Field(..., min_length=1, max_length=100)
-    config_value: str = Field(..., min_length=1, max_length=5000)
+    config_value: str = Field(..., max_length=5000)
     description: Optional[str] = Field(None, max_length=500)
     
     def validate_config_key(self) -> str:

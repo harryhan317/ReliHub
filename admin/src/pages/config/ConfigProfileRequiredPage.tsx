@@ -109,7 +109,7 @@ export default function ConfigProfileRequiredPage() {
 
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>个人信息等级必填项配置（§5.8 M5-F019）</span>
+          <span>个人信息等级必填项配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>

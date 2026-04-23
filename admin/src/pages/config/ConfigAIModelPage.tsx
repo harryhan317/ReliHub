@@ -109,25 +109,25 @@ export default function ConfigAIModelPage() {
   return (
     <>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0 }}>AI模型与系统提示词配置（§5.5）</h3>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {editing ? (
-            <>
-              <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
-              <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
-              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
-                {saving ? '保存中...' : '保存配置'}
-              </button>
-            </>
-          ) : (
-            <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>编辑配置</button>
-          )}
-        </div>
-      </div>
+      <h3 style={{ margin: '0 0 16px 0' }}>AI模型与系统提示词配置</h3>
 
       <div className="config-card">
-        <div className="config-card-title">AI大模型基础配置（§5.5）</div>
+        <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>AI大模型基础配置</span>
+          <div style={{ display: 'flex', gap: 8 }}>
+            {editing ? (
+              <>
+                <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
+                <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
+                  {saving ? '保存中...' : '保存配置'}
+                </button>
+              </>
+            ) : (
+              <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>编辑配置</button>
+            )}
+          </div>
+        </div>
         <div className="config-row">
           <div className="config-label">API服务商</div>
           <div className="config-value">
@@ -297,7 +297,7 @@ export default function ConfigAIModelPage() {
 
       <div className="config-card" style={{ marginTop: 16 }}>
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>System Prompt配置（§5.5.1）</span>
+          <span>System Prompt配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-sm" onClick={() => setShowTestPanel(!showTestPanel)}>
               {showTestPanel ? '关闭测试' : '预览测试'}
@@ -386,7 +386,7 @@ export default function ConfigAIModelPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">RAG知识库管理（§5.5.2）</div>
+        <div className="config-card-title">RAG知识库管理</div>
         <div style={{ padding: '20px 16px', textAlign: 'center', color: '#999' }}>
           <span className="badge badge-warning">Phase 3</span>
           <span style={{ marginLeft: 8 }}>RAG知识库功能将在Phase 3上线，当前仅预埋表结构</span>

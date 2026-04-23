@@ -67,6 +67,8 @@ export default function AuditCommunityPage() {
   const [selectedReport, setSelectedReport] = useState<ReportRecord | null>(null);
   const [commentModalOpen, setCommentModalOpen] = useState(false);
   const [selectedComment, setSelectedComment] = useState<CommentItem | null>(null);
+  const [topicDrawerOpen, setTopicDrawerOpen] = useState(false);
+  const [selectedTopicForDrawer, setSelectedTopicForDrawer] = useState<TopicItem | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -114,6 +116,31 @@ export default function AuditCommunityPage() {
   const formatDate = (d: string) => d ? d.slice(0, 16).replace('T', ' ') : '-';
   const totalPages = Math.ceil(total / 20);
 
+  const handleExport = () => {
+    if (filteredTopics.length === 0) {
+      showToast('没有可导出的数据', 'error');
+      return;
+    }
+    const headers = ['ID', '话题标题', '作者', '分类', '状态', '发布时间'];
+    const rows = filteredTopics.map((t) => [
+      t.id,
+      t.title,
+      t.author_id || '-',
+      categoryMap[t.category_id] || '-',
+      statusMap[t.status]?.label || t.status,
+      formatDate(t.created_at),
+    ]);
+    const csv = [headers, ...rows].map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `社区审核_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('导出成功', 'success');
+  };
+
   const TABS = ['话题审核', '举报处理', '点评审核'];
 
   return (
@@ -150,7 +177,7 @@ export default function AuditCommunityPage() {
               </div>
             </div>
             <div className="toolbar-right">
-              <button className="btn btn-sm">📥 导出</button>
+              <button className="btn btn-sm" onClick={handleExport}>📥 导出</button>
             </div>
           </div>
 
@@ -194,7 +221,7 @@ export default function AuditCommunityPage() {
                               <button className="btn btn-danger btn-sm" onClick={() => { setSelectedTopic(t); setModalOpen(true); }}>封禁</button>
                             </>
                           )}
-                          <button className="btn btn-sm">详情</button>
+                          <button className="btn btn-sm" onClick={() => { setSelectedTopicForDrawer(t); setTopicDrawerOpen(true); }}>详情</button>
                         </div>
                       </td>
                     </tr>
@@ -383,6 +410,29 @@ export default function AuditCommunityPage() {
           )}
         </>
       )}
+
+      <div className={`overlay ${topicDrawerOpen ? 'open' : ''}`} onClick={() => setTopicDrawerOpen(false)} />
+      <div className={`detail-drawer ${topicDrawerOpen ? 'open' : ''}`}>
+        <div className="detail-drawer-header">
+          <div className="detail-drawer-title">详情查看</div>
+          <div className="detail-drawer-close" onClick={() => setTopicDrawerOpen(false)}>✕</div>
+        </div>
+        <div className="detail-drawer-body">
+          {selectedTopicForDrawer && (
+            <>
+              <div className="detail-field"><div className="detail-field-label">ID</div><div className="detail-field-value">{selectedTopicForDrawer.id}</div></div>
+              <div className="detail-field"><div className="detail-field-label">标题</div><div className="detail-field-value">{selectedTopicForDrawer.title}</div></div>
+              <div className="detail-field"><div className="detail-field-label">分类</div><div className="detail-field-value">{categoryMap[selectedTopicForDrawer.category_id] || selectedTopicForDrawer.category_id}</div></div>
+              <div className="detail-field"><div className="detail-field-label">作者ID</div><div className="detail-field-value">{selectedTopicForDrawer.author_id}</div></div>
+              <div className="detail-field"><div className="detail-field-label">回复数</div><div className="detail-field-value">{selectedTopicForDrawer.post_count}</div></div>
+              <div className="detail-field"><div className="detail-field-label">浏览数</div><div className="detail-field-value">{selectedTopicForDrawer.view_count}</div></div>
+              <div className="detail-field"><div className="detail-field-label">状态</div><div className="detail-field-value"><span className={`badge ${statusMap[selectedTopicForDrawer.status]?.badge || 'badge-default'}`}>{statusMap[selectedTopicForDrawer.status]?.label || selectedTopicForDrawer.status}</span></div></div>
+              <div className="detail-field"><div className="detail-field-label">发布时间</div><div className="detail-field-value">{formatDate(selectedTopicForDrawer.created_at)}</div></div>
+              <div className="detail-field"><div className="detail-field-label">内容</div><div className="detail-field-value" style={{ whiteSpace: 'pre-wrap' }}>{selectedTopicForDrawer.content}</div></div>
+            </>
+          )}
+        </div>
+      </div>
 
       {modalOpen && selectedTopic && (
         <div className="modal-overlay" onClick={() => setModalOpen(false)}>

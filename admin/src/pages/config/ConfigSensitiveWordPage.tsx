@@ -104,7 +104,7 @@ export default function ConfigSensitiveWordPage() {
 
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>敏感词库管理（§5.9 M5-F020）</span>
+          <span>敏感词库管理</span>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn btn-sm" onClick={() => setShowImportModal(true)}>📥 批量导入</button>
             <button className="btn btn-primary btn-sm" onClick={() => setShowAddModal(true)}>➕ 新增关键词</button>

@@ -22,11 +22,21 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ code?: string | number; msg?: string }>) => {
+  (error: AxiosError<{ code?: string | number; msg?: string; detail?: unknown }>) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('admin_access_token');
       localStorage.removeItem('admin_user');
       window.location.href = '/admin/login';
+    }
+    if (error.response?.status === 422) {
+      const detail = error.response?.data?.detail;
+      let msg = '数据验证失败';
+      if (Array.isArray(detail) && detail[0]?.msg) {
+        msg = detail[0].msg;
+      } else if (typeof detail === 'string') {
+        msg = detail;
+      }
+      return Promise.reject(new Error(msg));
     }
     const msg = error.response?.data?.msg || error.message || '网络错误';
     return Promise.reject(new Error(msg));

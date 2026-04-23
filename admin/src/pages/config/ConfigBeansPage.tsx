@@ -179,7 +179,7 @@ export default function ConfigBeansPage() {
     <>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <h3 style={{ margin: 0 }}>可可豆与信誉分奖惩规则配置（§5.4）</h3>
+        <h3 style={{ margin: 0 }}>可可豆与信誉分奖惩规则配置</h3>
         <div style={{ display: 'flex', gap: 8 }}>
           {editing ? (
             <>
@@ -196,7 +196,7 @@ export default function ConfigBeansPage() {
       </div>
 
       <div className="config-card">
-        <div className="config-card-title">可可豆获取规则（§5.4.1）</div>
+        <div className="config-card-title">可可豆获取规则</div>
         {BEANS_REWARD.map(renderRow)}
         <div className="config-row" style={{ background: '#f6ffed', borderRadius: 6, padding: '8px 12px' }}>
           <div className="config-label" style={{ fontWeight: 600 }}>贡献者收益 ↔ 通缩销毁联动</div>
@@ -230,7 +230,7 @@ export default function ConfigBeansPage() {
           </div>
         </div>
         <div className="config-row" style={{ background: '#f0f5ff', borderRadius: 6, padding: '8px 12px' }}>
-          <div className="config-label" style={{ fontWeight: 600 }}>通缩比例配置（§5.4.4）</div>
+          <div className="config-label" style={{ fontWeight: 600 }}>通缩比例配置</div>
           <div className="config-value">
             {editing ? (
               <>
@@ -257,7 +257,7 @@ export default function ConfigBeansPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">早鸟活动配置（§5.4.5）</div>
+        <div className="config-card-title">早鸟活动配置</div>
         <div className="config-row">
           <div className="config-label">活动开关</div>
           <div className="config-value">
@@ -282,7 +282,7 @@ export default function ConfigBeansPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">邀请活动配置（§5.4.6）</div>
+        <div className="config-card-title">邀请活动配置</div>
         {BEANS_REWARD[8] && renderRow(BEANS_REWARD[8])}
         {BEANS_REWARD[9] && renderRow(BEANS_REWARD[9])}
         <div className="config-row">
@@ -311,12 +311,12 @@ export default function ConfigBeansPage() {
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">信誉分增加规则（§5.4.3）</div>
+        <div className="config-card-title">信誉分增加规则</div>
         {CREDIT_REWARD.map(renderRow)}
       </div>
 
       <div className="config-card" style={{ marginTop: 16 }}>
-        <div className="config-card-title">信誉分减少规则（§5.4.3）</div>
+        <div className="config-card-title">信誉分减少规则</div>
         {CREDIT_PENALTY.map(renderRow)}
         <div className="config-row" style={{ background: '#fff7e6', borderRadius: 6, padding: '8px 12px' }}>
           <div className="config-label">重复上传相似度阈值</div>

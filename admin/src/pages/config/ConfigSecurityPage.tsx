@@ -91,12 +91,16 @@ export default function ConfigSecurityPage() {
     setSaving(true);
     try {
       for (const key of keys) {
-        if (configs[key] !== undefined) await adminService.updateSystemConfig(key, configs[key]);
+        if (configs[key] !== undefined) {
+          await adminService.updateSystemConfig(key, configs[key]);
+        }
       }
       showToast('配置已保存', 'success');
       setEditing(false);
-    } catch {
-      showToast('保存失败', 'error');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '保存失败';
+      showToast(msg, 'error');
+      console.error('保存配置失败:', err);
     } finally {
       setSaving(false);
     }
@@ -122,6 +126,23 @@ export default function ConfigSecurityPage() {
     <>
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h3 style={{ margin: 0 }}>安全与风控配置</h3>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {editing ? (
+            <>
+              <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+              <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
+              <button className="btn btn-primary btn-sm" onClick={() => handleSave(allKeys)} disabled={saving}>
+                {saving ? '保存中...' : '保存配置'}
+              </button>
+            </>
+          ) : (
+            <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>编辑配置</button>
+          )}
+        </div>
+      </div>
+
       <div style={{ display: 'flex', gap: 0, marginBottom: 16 }}>
         {TABS.map((tab, idx) => (
           <button
@@ -137,16 +158,7 @@ export default function ConfigSecurityPage() {
 
       {activeTab === 0 && (
         <div className="config-card">
-          <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>反爬虫与反恶意爬取（§8.1 M5-F042）</span>
-            {editing && (
-              <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave([
-                'security_ip_minute_limit', 'security_ip_hour_limit', 'security_ban_duration_min', 'security_log_retention_days',
-              ])}>
-                {saving ? '保存中...' : '保存配置'}
-              </button>
-            )}
-          </div>
+          <div className="config-card-title">反爬虫与反恶意爬取</div>
           {renderField('security_ip_minute_limit', '单IP每分钟请求上限', '100', '次', 10, 10000)}
           {renderField('security_ip_hour_limit', '单IP每小时请求上限', '2000', '次', 100, 100000)}
           <div className="config-row">
@@ -182,18 +194,7 @@ export default function ConfigSecurityPage() {
 
       {activeTab === 1 && (
         <div className="config-card">
-          <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>反可可豆刷取（§8.2 M5-F043）</span>
-            {editing && (
-              <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave([
-                'security_beans_daily_user_limit', 'security_beans_daily_ip_limit',
-                'security_device_register_hour_limit', 'security_ip_register_hour_limit',
-                'security_beans_yellow_threshold', 'security_beans_red_threshold',
-              ])}>
-                {saving ? '保存中...' : '保存配置'}
-              </button>
-            )}
-          </div>
+          <div className="config-card-title">反可可豆刷取</div>
           <h4 style={{ margin: '0 0 8px', fontSize: 14, color: '#1890ff' }}>刷豆行为检测规则</h4>
           {renderField('security_beans_daily_user_limit', '单用户单日可可豆获取上限', '1000', '可可豆', 0, 999999)}
           {renderField('security_device_register_hour_limit', '同一设备注册次数上限（小时窗口）', '5', '次', 1, 100)}
@@ -211,17 +212,7 @@ export default function ConfigSecurityPage() {
 
       {activeTab === 2 && (
         <div className="config-card">
-          <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span>微信内容安全API配置（§8.3 M5-F044）</span>
-            {editing && (
-              <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave([
-                'content_api_secret', 'content_api_types', 'content_api_min_length',
-                'content_api_high_risk_action', 'content_api_mid_risk_action',
-              ])}>
-                {saving ? '保存中...' : '保存配置'}
-              </button>
-            )}
-          </div>
+          <div className="config-card-title">微信内容安全API配置</div>
           <div className="config-row">
             <div className="config-label">API Secret</div>
             <div className="config-value">
@@ -304,16 +295,7 @@ export default function ConfigSecurityPage() {
       {activeTab === 3 && (
         <>
           <div className="config-card">
-            <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>业务层限流（§8.5 M5-F046）</span>
-              {editing && (
-                <button className="btn btn-primary btn-sm" disabled={saving} onClick={() => handleSave([
-                  'rate_limit_general_qps', 'rate_limit_ai_qps', 'rate_limit_download_qps', 'rate_limit_register_qps',
-                ])}>
-                  {saving ? '保存中...' : '保存配置'}
-                </button>
-              )}
-            </div>
+            <div className="config-card-title">业务层限流</div>
             {renderField('rate_limit_general_qps', '各接口QPS上限（通用）', '100', '次/秒', 1, 10000)}
             {renderField('rate_limit_ai_qps', 'AI对话接口QPS上限', '50', '次/秒', 1, 1000)}
             {renderField('rate_limit_download_qps', '资源下载接口QPS上限', '200', '次/秒', 1, 10000)}
@@ -335,17 +317,6 @@ export default function ConfigSecurityPage() {
           </div>
         </>
       )}
-
-      <div style={{ marginTop: 16, textAlign: 'right' }}>
-        {!editing ? (
-          <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>编辑配置</button>
-        ) : (
-          <>
-            <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
-            <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消编辑</button>
-          </>
-        )}
-      </div>
     </>
   );
 }

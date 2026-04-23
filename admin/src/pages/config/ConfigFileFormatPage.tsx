@@ -93,7 +93,7 @@ export default function ConfigFileFormatPage() {
 
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>文件格式与上传限制配置（§5.7 M5-F018）</span>
+          <span>文件格式与上传限制配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>

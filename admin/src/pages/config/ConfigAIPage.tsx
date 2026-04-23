@@ -117,7 +117,7 @@ export default function ConfigAIPage() {
       {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
       <div className="config-card">
         <div className="config-card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span>AI问答等级权益配置（§5.1）</span>
+          <span>AI问答等级权益配置</span>
           <div style={{ display: 'flex', gap: 8 }}>
             {editing ? (
               <>
