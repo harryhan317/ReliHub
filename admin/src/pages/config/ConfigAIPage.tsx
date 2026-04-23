@@ -71,6 +71,15 @@ export default function ConfigAIPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const handleReset = () => {
+    const defaultConfigs: Record<string, LevelConfig> = {};
+    LEVELS.forEach((lv) => {
+      defaultConfigs[lv.key] = { ...DEFAULTS[lv.key] };
+    });
+    setConfigs(defaultConfigs);
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -113,6 +122,7 @@ export default function ConfigAIPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>

@@ -34,6 +34,32 @@ export default function ConfigLevelPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const LEVEL_DEFAULTS: Record<string, { min: number; max: number | null; upgrade: number | null }> = {
+    xinbing: { min: 0, max: 99, upgrade: 100 },
+    cainiao: { min: 100, max: 299, upgrade: 300 },
+    rumen: { min: 300, max: 599, upgrade: 600 },
+    shushou: { min: 600, max: 999, upgrade: 1000 },
+    laopao: { min: 1000, max: 1999, upgrade: 2000 },
+    daren: { min: 2000, max: null, upgrade: null },
+    zhuanjia: { min: 5000, max: null, upgrade: null },
+  };
+
+  const handleReset = () => {
+    const defaults: Record<string, string> = {};
+    LEVELS.forEach((lv) => {
+      const levelDefaults = LEVEL_DEFAULTS[lv.key];
+      if (levelDefaults) {
+        defaults[`level_${lv.key}_min`] = String(levelDefaults.min);
+        if (levelDefaults.max !== null) {
+          defaults[`level_${lv.key}_max`] = String(levelDefaults.max);
+        }
+      }
+    });
+    defaults['level_demotion_coefficient'] = '0.8';
+    setConfigs((p) => ({ ...p, ...defaults }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -78,6 +104,7 @@ export default function ConfigLevelPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>

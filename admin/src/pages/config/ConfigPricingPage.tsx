@@ -24,6 +24,20 @@ export default function ConfigPricingPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const PRICING_DEFAULTS: Record<string, string> = {
+    pricing_admin_min: '5',
+    pricing_admin_max: '100000',
+    pricing_user_min: '5',
+    pricing_user_max: '100000',
+    pricing_warning_low_ratio: '0.5',
+    pricing_warning_high_ratio: '2',
+  };
+
+  const handleReset = () => {
+    setConfigs((p) => ({ ...p, ...PRICING_DEFAULTS }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const getVal = (key: string, def: string) => configs[key] ?? def;
 
   const renderField = (key: string, label: string, def: string, unit: string, min?: number, max?: number) => (
@@ -87,6 +101,7 @@ export default function ConfigPricingPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>

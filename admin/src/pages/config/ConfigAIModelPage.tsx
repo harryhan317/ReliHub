@@ -49,6 +49,24 @@ export default function ConfigAIModelPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const AI_MODEL_DEFAULTS: Record<string, string> = {
+    ai_provider: 'DeepSeek',
+    ai_base_url: 'https://api.deepseek.com',
+    ai_api_key: '',
+    ai_model_version: 'deepseek-chat',
+    ai_price_input: '1',
+    ai_price_output: '2',
+    ai_timeout: '30',
+    ai_temperature: '0.7',
+    ai_system_prompt: '你是ReliHub的AI助手，专注于可靠性工程领域，帮助用户解答可靠性、维修性、测试性等相关问题。',
+  };
+
+  const handleReset = () => {
+    setConfigs((prev) => ({ ...prev, ...AI_MODEL_DEFAULTS }));
+    setPromptContent(AI_MODEL_DEFAULTS.ai_system_prompt);
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -57,7 +75,7 @@ export default function ConfigAIModelPage() {
         'ai_system_prompt'];
       for (const key of keys) {
         if (configs[key] !== undefined) {
-          await adminService.updateSystemConfig(key, configs[key]);
+          await adminService.updateSystemConfig(key, configs[key] as string);
         }
       }
       showToast('配置已保存', 'success');
@@ -97,6 +115,7 @@ export default function ConfigAIModelPage() {
           {editing ? (
             <>
               <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+              <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
               <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? '保存中...' : '保存配置'}
               </button>

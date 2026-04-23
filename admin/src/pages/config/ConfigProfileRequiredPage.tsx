@@ -69,6 +69,15 @@ export default function ConfigProfileRequiredPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const handleReset = () => {
+    const defaultMatrix: Record<string, FieldState[]> = {};
+    LEVEL_KEYS.forEach((key) => {
+      defaultMatrix[key] = [...(DEFAULT_MATRIX[key] || FIELDS.map(() => 'optional' as FieldState))];
+    });
+    setMatrix(defaultMatrix);
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const cycleState = (levelKey: string, fieldIdx: number) => {
     setMatrix((prev) => {
       const row = [...(prev[levelKey] || [])];
@@ -105,6 +114,7 @@ export default function ConfigProfileRequiredPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>

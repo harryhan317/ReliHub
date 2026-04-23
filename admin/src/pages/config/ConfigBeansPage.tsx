@@ -71,6 +71,54 @@ export default function ConfigBeansPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const BEANS_DEFAULTS: Record<string, string> = {
+    beans_register_reward: '30',
+    beans_early_bird_quota: '200',
+    beans_early_bird_reward: '20',
+    beans_daily_checkin: '2',
+    beans_upload_reward: '30',
+    beans_first_category_reward: '30',
+    beans_topic_reward: '10',
+    beans_first_topic_category_reward: '10',
+    beans_invite_reward: '10',
+    beans_invited_reward: '10',
+    beans_download_share: '70',
+    beans_topic_adopted_reward: '20',
+    beans_reply_adopted_reward: '10',
+    beans_deflation_rate: '30',
+    beans_early_bird_enabled: 'true',
+  };
+
+  const CREDIT_REWARD_DEFAULTS: Record<string, string> = {
+    credit_register_reward: '50',
+    credit_daily_checkin: '1',
+    credit_upload_reward: '20',
+    credit_download_reward: '2',
+    credit_favorite_reward: '3',
+    credit_like_reward: '1',
+    credit_reply_reward: '5',
+    credit_topic_reward: '10',
+    credit_adopted_reward: '30',
+    credit_invite_reward: '10',
+  };
+
+  const CREDIT_PENALTY_DEFAULTS: Record<string, string> = {
+    credit_violation_speech: '-20',
+    credit_cheat_penalty: '-50',
+    credit_duplicate_upload: '-10',
+    credit_malicious_report: '-15',
+    credit_spam_content: '-10',
+    credit_confirmed_violation: '-30',
+    credit_inactive_penalty: '-5',
+    credit_duplicate_threshold: '80',
+  };
+
+  const handleReset = () => {
+    const defaults = { ...BEANS_DEFAULTS, ...CREDIT_REWARD_DEFAULTS, ...CREDIT_PENALTY_DEFAULTS };
+    setConfigs((p) => ({ ...p, ...defaults }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const handleSave = useCallback(async () => {
     setSaving(true);
     try {
@@ -136,6 +184,7 @@ export default function ConfigBeansPage() {
           {editing ? (
             <>
               <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+              <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
               <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                 {saving ? '保存中...' : '保存配置'}
               </button>

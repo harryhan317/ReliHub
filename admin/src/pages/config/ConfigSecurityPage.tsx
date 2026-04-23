@@ -20,6 +20,38 @@ export default function ConfigSecurityPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const SECURITY_DEFAULTS: Record<string, string> = {
+    security_ip_minute_limit: '100',
+    security_ip_hour_limit: '2000',
+    security_ua_blacklist: '',
+    security_ban_duration_min: '30',
+    security_log_retention_days: '90',
+    security_beans_daily_user_limit: '1000',
+    security_beans_daily_ip_limit: '10000',
+    security_device_register_hour_limit: '5',
+    security_ip_register_hour_limit: '20',
+    security_beans_yellow_threshold: '80',
+    security_beans_red_threshold: '100',
+    content_api_secret: '',
+    content_api_types: 'topic_content,reply_content',
+    content_api_min_length: '50',
+    content_api_high_risk_action: 'delete_notify',
+    content_api_mid_risk_action: 'mark_pending',
+    rate_limit_general_qps: '100',
+    rate_limit_ai_qps: '50',
+    rate_limit_download_qps: '200',
+    rate_limit_register_qps: '20',
+    rate_limit_db_pool: '100',
+    rate_limit_redis_ttl: '300',
+    rate_limit_sensitive_sync_min: '5',
+    rate_limit_audit_lock_min: '15',
+  };
+
+  const handleReset = () => {
+    setConfigs((p) => ({ ...p, ...SECURITY_DEFAULTS }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
@@ -308,7 +340,10 @@ export default function ConfigSecurityPage() {
         {!editing ? (
           <button className="btn btn-primary btn-sm" onClick={() => setEditing(true)}>编辑配置</button>
         ) : (
-          <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消编辑</button>
+          <>
+            <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
+            <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消编辑</button>
+          </>
         )}
       </div>
     </>

@@ -307,11 +307,13 @@ const ChatPage: React.FC = () => {
       return m;
     }));
 
-    if (msg.id) {
+    if (msg.id && sessionId) {
       try {
         if (type === 'like') await aiService.likeMessage(sessionId, msg.id);
         else await aiService.dislikeMessage(sessionId, msg.id);
-      } catch { /* silent */ }
+      } catch (error) {
+        console.error('Feedback action failed:', error);
+      }
     }
   };
 

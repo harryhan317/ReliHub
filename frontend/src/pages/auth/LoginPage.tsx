@@ -270,7 +270,7 @@ const LoginPage: React.FC = () => {
         <div className="divider-with-text">其他登录方式</div>
         <div className="wechat-login-section">
           <Button variant="wechat" block size="lg" onClick={handleWechatLogin}>
-            <span>💬</span> 微信一键登录
+            <span style={{ fontSize: '18px', fontWeight: 'bold', color: '#ffffff' }}>💚</span> 微信一键登录
           </Button>
         </div>
       </div>

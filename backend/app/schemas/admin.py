@@ -172,7 +172,7 @@ class SystemConfigResponse(BaseModel):
     """Response schema for system config"""
     model_config = ConfigDict(from_attributes=True)
     
-    id: str
+    id: int
     config_key: str
     config_value: str
     description: Optional[str] = None

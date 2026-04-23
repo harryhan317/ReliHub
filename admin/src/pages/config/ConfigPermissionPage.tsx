@@ -10,7 +10,7 @@ const PERMISSIONS = [
   { key: 'community_browse', label: '社区浏览', type: 'number', unit: '条/天', defaults: ['10', '无限', '无限', '无限', '无限', '无限', '无限', '无限'] },
   { key: 'topic_create', label: '发起话题', type: 'toggle', defaults: [false, true, true, true, true, true, true, true] },
   { key: 'bounty_create', label: '发起悬赏', type: 'toggle', defaults: [false, true, true, true, true, true, true, true] },
-  { key: 'expert_service', label: '专家服务', type: 'toggle', defaults: [false, false, false, false, false, false, false, true] },
+  { key: 'expert_service', label: '提供专家咨询服务', type: 'toggle', defaults: [false, false, false, false, false, false, false, true] },
 ];
 
 const ADMIN_PERMISSIONS = [
@@ -45,6 +45,35 @@ export default function ConfigPermissionPage() {
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const PERMISSION_DEFAULTS: Record<string, string> = {
+    perm_resource_browse_0: '10', perm_resource_browse_1: '无限', perm_resource_browse_2: '无限',
+    perm_resource_browse_3: '无限', perm_resource_browse_4: '无限', perm_resource_browse_5: '无限',
+    perm_resource_browse_6: '无限', perm_resource_browse_7: '无限',
+    perm_resource_download_0: '0', perm_resource_download_1: '3', perm_resource_download_2: '5',
+    perm_resource_download_3: '8', perm_resource_download_4: '10', perm_resource_download_5: '15',
+    perm_resource_download_6: '20', perm_resource_download_7: '30',
+    perm_resource_upload_0: 'false', perm_resource_upload_1: 'true', perm_resource_upload_2: 'true',
+    perm_resource_upload_3: 'true', perm_resource_upload_4: 'true', perm_resource_upload_5: 'true',
+    perm_resource_upload_6: 'true', perm_resource_upload_7: 'true',
+    perm_community_browse_0: '10', perm_community_browse_1: '无限', perm_community_browse_2: '无限',
+    perm_community_browse_3: '无限', perm_community_browse_4: '无限', perm_community_browse_5: '无限',
+    perm_community_browse_6: '无限', perm_community_browse_7: '无限',
+    perm_topic_create_0: 'false', perm_topic_create_1: 'true', perm_topic_create_2: 'true',
+    perm_topic_create_3: 'true', perm_topic_create_4: 'true', perm_topic_create_5: 'true',
+    perm_topic_create_6: 'true', perm_topic_create_7: 'true',
+    perm_bounty_create_0: 'false', perm_bounty_create_1: 'true', perm_bounty_create_2: 'true',
+    perm_bounty_create_3: 'true', perm_bounty_create_4: 'true', perm_bounty_create_5: 'true',
+    perm_bounty_create_6: 'true', perm_bounty_create_7: 'true',
+    perm_expert_service_0: 'false', perm_expert_service_1: 'false', perm_expert_service_2: 'false',
+    perm_expert_service_3: 'false', perm_expert_service_4: 'false', perm_expert_service_5: 'false',
+    perm_expert_service_6: 'false', perm_expert_service_7: 'true',
+  };
+
+  const handleReset = () => {
+    setConfigs((p) => ({ ...p, ...PERMISSION_DEFAULTS }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
   };
 
   const handleSave = useCallback(async () => {
@@ -87,6 +116,7 @@ export default function ConfigPermissionPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>

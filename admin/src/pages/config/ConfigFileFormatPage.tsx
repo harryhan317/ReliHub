@@ -27,6 +27,20 @@ export default function ConfigFileFormatPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const FILE_FORMAT_DEFAULTS: Record<string, string> = {
+    file_doc_formats: 'txt,doc,docx,pdf,xls,xlsx,ppt,pptx',
+    file_img_formats: 'PNG,JPG,JPEG',
+    file_doc_max_size_mb: '20',
+    file_img_max_size_mb: '5',
+    file_session_storage_mb: '100',
+    file_session_attach_limit: '10',
+  };
+
+  const handleReset = () => {
+    setConfigs((p) => ({ ...p, ...FILE_FORMAT_DEFAULTS }));
+    showToast('已恢复到默认值，请点击"保存配置"以生效', 'success');
+  };
+
   const getVal = (key: string, def: string) => configs[key] ?? def;
 
   const getDocFormats = () => {
@@ -84,6 +98,7 @@ export default function ConfigFileFormatPage() {
             {editing ? (
               <>
                 <button className="btn btn-sm" onClick={() => setEditing(false)} disabled={saving}>取消</button>
+                <button className="btn btn-sm" onClick={handleReset} disabled={saving}>恢复默认</button>
                 <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
                   {saving ? '保存中...' : '保存配置'}
                 </button>
