@@ -1,11 +1,13 @@
 """
 Administrator ORM models – aligned with DB_管理员.md.
 """
-from sqlalchemy import String, Boolean, DateTime, Text
-from sqlalchemy.sql import func
-from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime
 from typing import Optional
+
+from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
+
 from . import Base
 
 

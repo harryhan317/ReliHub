@@ -3,32 +3,61 @@
 ## 1. 资源列表与检索
 - **Endpoint**: `GET /api/v1/resources`
 - **参数**: 
-  - `keyword`: 关键字
-  - `category_id`: 分类过滤
-  - `sort_by`: `latest` / `hottest` (默认: hottest)
-  - `tag`: 标签过滤
+  - `category_id`: 分类过滤（可选）
+  - `search`: 关键字搜索（可选）
+  - `sort_by`: 排序字段 `heat_score` / `latest`（默认: heat_score）
+  - `page`: 页码，默认 1
+  - `page_size`: 每页数量，默认 20
+- **响应**: `ResourceListResponse`
 
-## 2. 资源上传 (两阶段)
-### 2.1 请求预签名 URL
-- **Endpoint**: `POST /api/v1/resources/upload-init`
-- **参数**: `filename`, `file_size`, `md5_hash`
-- **校验**: 
-  - `dup_upload_count` 入口硬拦截 (403)。
-  - **秒传校验**: 对全平台**所有状态**的 MD5 进行比对。若 MD5 存在且 `ref_counts` > 0，直接返回成功。
+## 2. 资源创建与管理
 
-### 2.2 提交元数据
+### 2.1 创建资源
 - **Endpoint**: `POST /api/v1/resources`
-- **参数**: `title`, `description`, `price`, `file_uuid`, `category_id`
-- **逻辑**: 写入 `resources` 表，初始状态 `SCANNING`。
-  - 管理员可勾选 `is_seed=true` 标识。
-  - (*注：后续人工审核通过时，系统需判定首发分类情况，若为首发则触发 `CATEGORY_FIRST_POST_REWARD` 流水，额外奖励 30 福利豆。*)
+- **权限**: 需登录
+- **请求体**:
+  ```json
+  {
+    "title": "资源标题",
+    "description": "资源描述",
+    "category_id": 1,
+    "price": 10,
+    "file_uuid": "文件UUID",
+    "tags": ["标签1", "标签2"]
+  }
+  ```
+- **逻辑**: 写入 `resources` 表，初始状态 `SCANNING`，等待审核。
+- **响应**: `ResourceResponse`
 
-## 3. 资源详情与下载
-### 3.1 获取详情
-- **Endpoint**: `GET /api/v1/resources/{id}`
+### 2.2 获取资源详情
+- **Endpoint**: `GET /api/v1/resources/{resource_id}`
+- **响应**: `ResourceResponse`
 
-### 3.2 下载请求
-- **Endpoint**: `GET /api/v1/resources/{id}/download`
+### 2.3 更新资源
+- **Endpoint**: `PUT /api/v1/resources/{resource_id}`
+- **权限**: 仅资源上传者
+- **请求体**:
+  ```json
+  {
+    "title": "新标题",
+    "description": "新描述",
+    "category_id": 2,
+    "price": 15
+  }
+  ```
+- **响应**: `ResourceResponse`
+
+### 2.4 删除资源
+- **Endpoint**: `DELETE /api/v1/resources/{resource_id}`
+- **权限**: 仅资源上传者
+- **逻辑**: 软删除，设置 `is_deleted = true`
+- **响应**: `{"message": "Resource deleted successfully"}`
+
+## 3. 资源下载
+
+### 3.1 下载资源
+- **Endpoint**: `POST /api/v1/resources/{resource_id}/download`
+- **权限**: 需登录
 - **Header**: `X-Idempotency-Key` (用于防止重复扣费)
 - **逻辑**: 
   - **基础资源判定**: 若 `resources.is_seed = true`：
@@ -40,7 +69,29 @@
   - **余额检查**: 若需付费，检查总余额 (优先福利豆)。
   - **分账**: 按照 70/30 逻辑触发流水，并初始化 `user_download_entitlements`。
   - 返回 OSS 短效下载链接。
+- **响应**: `{"message": "Download initiated", "resource_id": "xxx"}`
+
+## 4. 资源审核
+
+### 4.1 审核资源
+- **Endpoint**: `POST /api/v1/resources/{resource_id}/review`
+- **权限**: 管理员
+- **请求体**:
+  ```json
+  {
+    "status": "APPROVED/REJECTED/BLOCKED",
+    "reason": "审核原因"
+  }
+  ```
+- **响应**: `ResourceResponse`
+
+## 5. 资源互动
+
+### 5.1 增加浏览量
+- **Endpoint**: `POST /api/v1/resources/{resource_id}/view`
+- **响应**: `{"message": "View count incremented"}`
 
 ---
 - [x] 对齐 PRD §3.1 资源模块流程。
-- [x] 整合秒传与重复上传硬拦截逻辑。
+- [x] 对齐代码实现：端点路径已与 `app/api/v1/resources/router.py` 同步。
+- [x] 下载端点方法调整为 POST（支持幂等性 Header）。

@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ReliHub - 电子产品可靠性AI社区</title>
+  <link rel="stylesheet" href="css/design-system.css">
+  <link rel="stylesheet" href="css/pages.css">
+</head>
+<body>
+  <div class="phone-frame">
+    <div class="phone-notch"></div>
+    <div class="phone-screen">
+
+      <!-- ==================== 欢迎页 ==================== -->
+      <div id="welcome" class="page active">
+        <div class="mesh-bg"></div>
+        <div class="welcome-content">
+          <div class="welcome-logo">R</div>
+          <div class="welcome-title gradient-text">ReliHub</div>
+          <div class="welcome-subtitle">电子产品可靠性AI社区<br>专业 · 智能 · 共享</div>
+          <div class="welcome-quote">"可靠性是设计出来的，不是测试出来的"</div>
+          <button class="btn btn-primary btn-lg btn-block" data-action="navigate" data-param="page-ask">进入 ReliHub</button>
+          <div class="welcome-skip" data-action="navigate" data-param="page-ask">跳过，随便看看 →</div>
+        </div>
+      </div>
+
+      <!-- ==================== 登录注册页 ==================== -->
+      <div id="page-login" class="page">
+        <div class="mesh-bg"></div>
+        <div class="top-bar" style="background:transparent;border:none;">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title"></div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="login-header">
+          <div class="login-logo">R</div>
+          <div class="login-title gradient-text">欢迎来到 ReliHub</div>
+          <div class="login-subtitle">登录或注册，开启可靠性之旅</div>
+        </div>
+        <div class="login-form">
+          <div class="login-tabs">
+            <button class="login-tab active" onclick="switchLoginTab(this,'code-login')">验证码登录</button>
+            <button class="login-tab" onclick="switchLoginTab(this,'password-login')">密码登录</button>
+          </div>
+          <div id="code-login" class="login-panel active">
+            <div class="input-group">
+              <div class="phone-input-row">
+                <span class="phone-prefix">+86</span>
+                <input class="input-field" type="tel" placeholder="请输入手机号" maxlength="11">
+              </div>
+            </div>
+            <div class="input-group">
+              <div class="code-input-row">
+                <input class="input-field" type="text" placeholder="请输入验证码" maxlength="6">
+                <button class="send-code-btn" data-action="send-code">获取验证码</button>
+              </div>
+            </div>
+            <div class="agreement-row">
+              <div class="checkbox-wrapper" data-action="toggle-checkbox">
+                <div class="checkbox agreement-checkbox"></div>
+              </div>
+              <span>我已阅读并同意 <a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></span>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="login">登录 / 注册</button>
+          </div>
+          <div id="password-login" class="login-panel">
+            <div class="input-group">
+              <div class="phone-input-row">
+                <span class="phone-prefix">+86</span>
+                <input class="input-field" type="tel" placeholder="请输入手机号" maxlength="11">
+              </div>
+            </div>
+            <div class="input-group">
+              <input class="input-field" type="password" placeholder="请输入密码">
+              <div class="forgot-password" data-action="navigate" data-param="page-forgot-password">忘记密码？</div>
+            </div>
+            <div class="agreement-row">
+              <div class="checkbox-wrapper" data-action="toggle-checkbox">
+                <div class="checkbox agreement-checkbox"></div>
+              </div>
+              <span>我已阅读并同意 <a href="#">《用户协议》</a>和<a href="#">《隐私政策》</a></span>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="login">登录</button>
+          </div>
+          <div class="divider-with-text">其他登录方式</div>
+          <div class="wechat-login-section">
+            <button class="btn btn-wechat btn-block btn-lg" data-action="login"><span>💬</span> 微信一键登录</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 忘记密码页 ==================== -->
+      <div id="page-forgot-password" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">重置密码</div>
+          <div style="width:32px"></div>
+        </div>
+        <div style="padding:var(--spacing-xl);display:flex;flex-direction:column;gap:var(--spacing-lg);">
+          <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-bottom:var(--spacing-md);">通过手机验证码验证身份后重置密码</div>
+          <div class="input-group">
+            <div class="phone-input-row">
+              <span class="phone-prefix">+86</span>
+              <input class="input-field" type="tel" placeholder="请输入注册手机号" maxlength="11">
+            </div>
+          </div>
+          <div class="input-group">
+            <div class="code-input-row">
+              <input class="input-field" type="text" placeholder="请输入验证码" maxlength="6">
+              <button class="send-code-btn" data-action="send-code">获取验证码</button>
+            </div>
+          </div>
+          <div class="input-group">
+            <label class="input-label">新密码</label>
+            <input class="input-field" type="password" placeholder="8-20位，含大小写字母/数字/符号至少2种">
+          </div>
+          <div class="input-group">
+            <label class="input-label">确认密码</label>
+            <input class="input-field" type="password" placeholder="请再次输入新密码">
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" data-action="navigate" data-param="page-login" style="margin-top:var(--spacing-md);">确认重置</button>
+        </div>
+      </div>
+
+      <!-- ==================== 个人信息填写页 ==================== -->
+      <div id="page-profile-setup" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="switch-tab" data-param="ask">跳过</button>
+          <div class="top-bar-title">完善个人档案</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="profile-setup">
+          <div class="profile-avatar-upload">
+            <div class="profile-avatar-circle">😊</div>
+            <span style="font-size:var(--font-size-caption);color:var(--color-accent);">点击上传头像</span>
+          </div>
+          <div class="profile-form">
+            <div class="input-group">
+              <label class="input-label">昵称<span class="required-mark">*</span></label>
+              <input class="input-field" type="text" placeholder="给自己取个名字吧" maxlength="20">
+            </div>
+            <div class="input-group">
+              <label class="input-label">性别<span class="optional-mark">选填</span></label>
+              <div style="display:flex;gap:var(--spacing-md);">
+                <button class="btn btn-secondary btn-sm" style="flex:1" onclick="this.classList.toggle('btn-primary');this.classList.toggle('btn-secondary')">男</button>
+                <button class="btn btn-secondary btn-sm" style="flex:1" onclick="this.classList.toggle('btn-primary');this.classList.toggle('btn-secondary')">女</button>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">单位<span class="optional-mark">选填</span></label>
+              <input class="input-field" type="text" placeholder="公司或机构名称">
+            </div>
+            <div class="input-group">
+              <label class="input-label">职务<span class="optional-mark">选填</span></label>
+              <input class="input-field" type="text" placeholder="如：质量工程师">
+            </div>
+            <div class="input-group">
+              <label class="input-label">Email<span class="optional-mark">选填</span></label>
+              <input class="input-field" type="email" placeholder="your@email.com">
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="switch-tab" data-param="ask" style="margin-top:var(--spacing-md);">完成</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 爱问主页 ==================== -->
+      <div id="page-ask" class="page">
+        <div class="top-bar">
+          <div class="top-bar-title gradient-text">ReliBot 爱问</div>
+          <div style="display:flex;gap:var(--spacing-sm);">
+            <button class="top-bar-btn" data-action="show-modal" data-param="modal-history">📋</button>
+            <button class="top-bar-btn" data-action="navigate" data-param="page-notification" style="position:relative;">🔔<span style="position:absolute;top:2px;right:2px;width:6px;height:6px;background:var(--color-error);border-radius:50%;"></span></button>
+          </div>
+        </div>
+        <div class="guest-banner" id="guest-banner-ask">
+          <span class="guest-banner-icon">👋</span>
+          <span class="guest-banner-text">游客模式 · 每日可发起3个AI对话</span>
+          <span class="guest-banner-btn" data-action="show-register-guide" data-param="ai_limit">注册</span>
+        </div>
+        <div class="search-bar">
+          <div class="search-input-wrapper" data-action="open-search" data-param="AI" style="cursor:pointer;"><span class="search-icon">🔍</span><input type="text" placeholder="搜索我的对话" readonly style="cursor:pointer;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-md) var(--spacing-lg);">
+          <div class="ai-intro-card">
+            <div style="font-size:var(--font-size-h3);font-weight:600;margin-bottom:var(--spacing-sm);">🤖 你好，我是 ReliBot</div>
+            <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);line-height:1.5;">我是电子产品可靠性领域的AI助手，可以帮你解答可靠性设计、测试、失效分析等专业问题。</div>
+          </div>
+          <div class="section-header" style="padding-left:0;padding-right:0;">
+            <div class="section-title">历史对话</div>
+            <span class="section-action" data-action="show-modal" data-param="modal-history">查看全部</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);">
+            <div class="card" data-action="navigate" data-param="page-chat" style="cursor:pointer;">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:500;">电容降额设计规范</div><span class="tag tag-accent">3轮</span></div>
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-top:var(--spacing-xs);">今天 14:30</div>
+            </div>
+            <div class="card" data-action="navigate" data-param="page-chat" style="cursor:pointer;">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:500;">HALT测试流程咨询</div><span class="tag tag-accent">7轮</span></div>
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-top:var(--spacing-xs);">昨天 09:15</div>
+            </div>
+            <div class="card" data-action="navigate" data-param="page-chat" style="cursor:pointer;">
+              <div style="display:flex;justify-content:space-between;align-items:center;"><div style="font-weight:500;">FMEA分析方法</div><span class="tag tag-success">已解决</span></div>
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-top:var(--spacing-xs);">4月10日</div>
+            </div>
+          </div>
+          <div style="margin-top:var(--spacing-xl);display:flex;flex-direction:column;gap:var(--spacing-sm);">
+            <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);margin-bottom:var(--spacing-xs);">💡 试试问我：</div>
+            <div class="card" style="padding:var(--spacing-md);cursor:pointer;border-style:dashed;" data-action="navigate" data-param="page-chat">
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-secondary);">如何进行电子元器件的降额设计？</div>
+            </div>
+            <div class="card" style="padding:var(--spacing-md);cursor:pointer;border-style:dashed;" data-action="navigate" data-param="page-chat">
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-secondary);">温度循环试验的常见失效模式有哪些？</div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <div style="display:flex;gap:var(--spacing-sm);align-items:center;">
+            <button class="icon-btn" style="font-size:20px;">📎</button>
+            <input class="input-field" style="flex:1;border-radius:var(--radius-pill);padding:10px 16px;" placeholder="输入你的可靠性问题...">
+            <button class="btn btn-primary btn-sm" data-action="navigate" data-param="page-chat">发送</button>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-item active" data-tab="ask"><span class="nav-icon">🤖</span><span class="nav-label">爱问</span></button>
+          <button class="nav-item" data-tab="resource"><span class="nav-icon">📚</span><span class="nav-label">资源</span></button>
+          <button class="nav-item" data-tab="community"><span class="nav-icon">💬</span><span class="nav-label">社区</span></button>
+          <button class="nav-item" data-tab="my"><span class="nav-icon">👤</span><span class="nav-label">我的</span></button>
+        </div>
+      </div>
+
+      <!-- ==================== AI对话详情页 ==================== -->
+      <div id="page-chat" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="navigate" data-param="page-ask">←</button>
+          <div class="top-bar-title" style="font-size:var(--font-size-body);">电容降额设计规范</div>
+          <button class="top-bar-btn">✨</button>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);display:flex;flex-direction:column;gap:var(--spacing-lg);">
+          <div style="display:flex;gap:var(--spacing-md);align-items:flex-start;">
+            <div class="avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">U</div>
+            <div style="flex:1;background:var(--color-bg-input);border-radius:var(--radius-lg);padding:var(--spacing-md);font-size:var(--font-size-body);line-height:var(--line-height-body);">如何进行铝电解电容的降额设计？需要考虑哪些关键参数？</div>
+          </div>
+          <div style="display:flex;gap:var(--spacing-md);align-items:flex-start;">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--color-accent-start),var(--color-accent-end));">R</div>
+            <div style="flex:1;">
+              <div class="ai-response-card">
+                <p>铝电解电容的降额设计是可靠性工程中的关键环节：</p>
+                <p style="margin-top:8px;"><strong>1. 电压降额</strong> — 工作电压不超过额定电压的70%~80%</p>
+                <p style="margin-top:4px;"><strong>2. 温度降额</strong> — 105°C额定电容建议85°C以下使用，每降低10°C寿命约翻倍</p>
+                <p style="margin-top:4px;"><strong>3. 纹波电流降额</strong> — 实际纹波电流不超过额定的70%</p>
+              </div>
+              <div class="response-actions">
+                <button class="icon-btn" data-action="like">👍</button>
+                <button class="icon-btn" data-action="dislike">👎</button>
+                <button class="icon-btn">📋</button>
+                <button class="icon-btn" data-action="share">🔗</button>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:var(--spacing-md);align-items:flex-start;">
+            <div class="avatar" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">U</div>
+            <div style="flex:1;background:var(--color-bg-input);border-radius:var(--radius-lg);padding:var(--spacing-md);font-size:var(--font-size-body);line-height:var(--line-height-body);">温度对寿命的影响具体怎么计算？</div>
+          </div>
+          <div style="display:flex;gap:var(--spacing-md);align-items:flex-start;">
+            <div class="avatar" style="background:linear-gradient(135deg,var(--color-accent-start),var(--color-accent-end));">R</div>
+            <div style="flex:1;">
+              <div class="ai-response-card">
+                <p>遵循<strong>阿伦尼乌斯方程</strong>简化公式：</p>
+                <div class="formula-box">L₂ = L₁ × 2^((T₁-T₂)/10)</div>
+                <p>例如：额定105°C/2000h的电容，在85°C下：</p>
+                <div class="formula-box">L₂ = 2000 × 2^((105-85)/10) = 8000h</div>
+              </div>
+              <div class="response-actions">
+                <button class="icon-btn" data-action="like">👍</button>
+                <button class="icon-btn" data-action="dislike">👎</button>
+                <button class="icon-btn">📋</button>
+                <button class="icon-btn" data-action="share">🔗</button>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center;font-size:var(--font-size-small);color:var(--color-text-muted);padding:var(--spacing-sm);">剩余 8/10 轮 · 今日剩余 12/15 轮</div>
+        </div>
+        <div class="chat-input-bar" style="bottom:0;">
+          <div style="display:flex;gap:var(--spacing-sm);align-items:center;">
+            <button class="icon-btn" style="font-size:20px;">📎</button>
+            <input class="input-field" style="flex:1;border-radius:var(--radius-pill);padding:10px 16px;" placeholder="继续提问...">
+            <button class="btn btn-primary btn-sm">发送</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 资源主页 ==================== -->
+      <div id="page-resource" class="page">
+        <div class="top-bar">
+          <div class="top-bar-title gradient-text">资源库</div>
+          <button class="top-bar-btn" data-action="navigate" data-param="page-resource-upload">📤</button>
+        </div>
+        <div class="guest-banner">
+          <span class="guest-banner-icon">👀</span>
+          <span class="guest-banner-text">游客模式 · 仅可浏览10条热门资源</span>
+          <span class="guest-banner-btn" data-action="show-register-guide" data-param="resource_limit">注册</span>
+        </div>
+        <div class="search-bar">
+          <div class="search-input-wrapper" data-action="open-search" data-param="RESOURCE" style="cursor:pointer;"><span class="search-icon">🔍</span><input type="text" placeholder="搜索资源标题/关键词" readonly style="cursor:pointer;"></div>
+        </div>
+        <div class="content-area" style="padding:0 var(--spacing-lg) var(--spacing-lg);">
+          <div class="section-header" style="padding-left:0;padding-right:0;"><div class="section-title">资源分类</div></div>
+          <div class="category-grid-4">
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">📋</div><div class="category-name">标准规范</div><div class="category-count">128</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">📖</div><div class="category-name">器件手册</div><div class="category-count">256</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">📝</div><div class="category-name">应用笔记</div><div class="category-count">89</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">🔧</div><div class="category-name">工具模版</div><div class="category-count">45</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">💡</div><div class="category-name">案例分享</div><div class="category-count">67</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">🎓</div><div class="category-name">培训资料</div><div class="category-count">34</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">📚</div><div class="category-name">推荐书单</div><div class="category-count">22</div></div>
+            <div class="card category-card" data-action="navigate" data-param="page-resource-category"><div class="category-icon">🌐</div><div class="category-name">综合杂谈</div><div class="category-count">15</div></div>
+          </div>
+          <div class="section-header" style="padding-left:0;padding-right:0;"><div class="section-title">🔥 热门推荐</div></div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="tag-row"><span class="tag tag-accent">标准规范</span><span class="tag tag-success">基础资源</span><span class="tag tag-warning">最新</span></div>
+              <div class="resource-title">GJB/Z 299C 电子设备可靠性预计手册</div>
+              <div class="resource-desc">涵盖元器件计数法和应力分析法，适用于军工及高可靠领域...</div>
+              <div class="resource-meta"><span>📥 326 · 👀 1.2k</span><span class="resource-price">5 🫘</span></div>
+            </div>
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="tag-row"><span class="tag tag-accent">器件手册</span></div>
+              <div class="resource-title">MLCC电容选型与可靠性应用指南</div>
+              <div class="resource-desc">多层陶瓷电容的选型原则、失效模式分析及降额设计建议...</div>
+              <div class="resource-meta"><span>📥 198 · 👀 856</span><span class="resource-price">15 🫘</span></div>
+            </div>
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="tag-row"><span class="tag tag-accent">案例分享</span><span class="tag tag-warning">精华</span></div>
+              <div class="resource-title">某型号电源模块HALT测试案例</div>
+              <div class="resource-desc">详细记录了高加速寿命测试全过程，包含失效分析与改进措施...</div>
+              <div class="resource-meta"><span>📥 145 · 👀 623</span><span class="resource-price">20 🫘</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-item" data-tab="ask"><span class="nav-icon">🤖</span><span class="nav-label">爱问</span></button>
+          <button class="nav-item active" data-tab="resource"><span class="nav-icon">📚</span><span class="nav-label">资源</span></button>
+          <button class="nav-item" data-tab="community"><span class="nav-icon">💬</span><span class="nav-label">社区</span></button>
+          <button class="nav-item" data-tab="my"><span class="nav-icon">👤</span><span class="nav-label">我的</span></button>
+        </div>
+      </div>
+
+      <!-- ==================== 资源详情页 ==================== -->
+      <div id="page-resource-detail" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">资源详情</div>
+          <button class="top-bar-btn" data-action="share">🔗</button>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div class="tag-row" style="margin-bottom:var(--spacing-md);"><span class="tag tag-accent">标准规范</span><span class="tag tag-success">基础资源</span><span class="tag tag-warning">最新</span></div>
+          <h2 style="font-size:var(--font-size-h2);font-weight:700;margin-bottom:var(--spacing-sm);">GJB/Z 299C 电子设备可靠性预计手册</h2>
+          <div style="display:flex;align-items:center;gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
+            <div class="avatar avatar-sm">张</div>
+            <div><div style="font-size:var(--font-size-caption);font-weight:500;">张工 · 熟手</div><div style="font-size:var(--font-size-small);color:var(--color-text-muted);">3天前上传</div></div>
+          </div>
+          <div style="font-size:var(--font-size-body);color:var(--color-text-secondary);line-height:var(--line-height-body);margin-bottom:var(--spacing-xl);">涵盖元器件计数法和应力分析法，适用于军工及高可靠领域的电子设备可靠性预计。包含各类元器件的基本失效率数据及修正因子。</div>
+          <div class="tag-row" style="flex-wrap:wrap;margin-bottom:var(--spacing-xl);"><span class="tag tag-accent">GJB</span><span class="tag tag-accent">可靠性预计</span><span class="tag tag-accent">失效率</span><span class="tag tag-accent">军标</span></div>
+          <div class="card" style="margin-bottom:var(--spacing-lg);">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--spacing-md);font-size:var(--font-size-caption);">
+              <div><span style="color:var(--color-text-muted);">格式</span><br><strong>PDF</strong></div>
+              <div><span style="color:var(--color-text-muted);">大小</span><br><strong>12.5 MB</strong></div>
+              <div><span style="color:var(--color-text-muted);">下载</span><br><strong>326次</strong></div>
+              <div><span style="color:var(--color-text-muted);">浏览</span><br><strong>1,200次</strong></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:var(--spacing-lg);align-items:center;margin-bottom:var(--spacing-xl);">
+            <div style="text-align:center;"><div style="font-size:var(--font-size-h2);font-weight:700;color:var(--color-gold);">5</div><div style="font-size:var(--font-size-small);color:var(--color-text-muted);">可可豆</div></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:var(--spacing-sm);">
+              <button class="btn btn-primary btn-block" data-action="download">📥 立即下载</button>
+              <button class="btn btn-secondary btn-block" style="font-size:var(--font-size-caption);">👁 预览 (前2页)</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div style="display:flex;justify-content:space-around;padding:var(--spacing-md) 0;">
+            <button class="icon-btn action-col" data-action="collect">⭐<span>收藏</span></button>
+            <button class="icon-btn action-col" data-action="like">👍<span>56</span></button>
+            <button class="icon-btn action-col" data-action="dislike">👎<span>2</span></button>
+            <button class="icon-btn action-col" data-action="share">🔗<span>分享</span></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 资源分类页 ==================== -->
+      <div id="page-resource-category" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">标准规范</div>
+          <button class="top-bar-btn" data-action="open-search" data-param="RESOURCE">🔍</button>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">最新</button>
+          <button class="tab-item" data-action="tab-switch">精华</button>
+          <button class="tab-item" data-action="tab-switch">基础资源</button>
+          <button class="tab-item" data-action="tab-switch">闲置</button>
+          <div class="tab-indicator" style="left:0;width:25%;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="tag-row"><span class="tag tag-warning">最新</span><span class="tag tag-success">基础资源</span></div>
+              <div class="resource-title">GJB/Z 299C 电子设备可靠性预计手册</div>
+              <div class="resource-meta"><span>📥 326 · 👀 1.2k</span><span class="resource-price">5 🫘</span></div>
+            </div>
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="tag-row"><span class="tag tag-warning">最新</span></div>
+              <div class="resource-title">MIL-HDBK-217F 可靠性预计</div>
+              <div class="resource-meta"><span>📥 210 · 👀 890</span><span class="resource-price">10 🫘</span></div>
+            </div>
+            <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+              <div class="resource-title">IEC 62380 可靠性数据手册</div>
+              <div class="resource-meta"><span>📥 156 · 👀 678</span><span class="resource-price">8 🫘</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 资源上传页 ==================== -->
+      <div id="page-resource-upload" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">分享资源</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-xl);">
+          <div class="upload-zone">
+            <div style="font-size:36px;margin-bottom:var(--spacing-sm);">📤</div>
+            <div style="font-size:var(--font-size-body);color:var(--color-text-secondary);">点击或拖拽上传文件</div>
+            <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);margin-top:var(--spacing-xs);">支持 PDF/DOC/XLS/PPT/PNG/JPG，单文件≤20MB</div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-lg);">
+            <div class="input-group"><label class="input-label">资源标题<span class="required-mark">*</span></label><input class="input-field" type="text" placeholder="请输入资源标题" maxlength="50"></div>
+            <div class="input-group"><label class="input-label">资源分类<span class="required-mark">*</span></label><select class="input-field" style="appearance:auto;"><option value="">请选择分类</option><option>标准规范</option><option>器件手册</option><option>应用笔记</option><option>工具模版</option><option>案例分享</option><option>培训资料</option><option>推荐书单</option><option>综合杂谈</option></select></div>
+            <div class="input-group"><label class="input-label">资源简介<span class="required-mark">*</span></label><textarea class="input-field" rows="3" placeholder="请描述资源内容（10-500字）" style="resize:none;"></textarea></div>
+            <div class="input-group"><label class="input-label">关键词（最多5个）</label><input class="input-field" type="text" placeholder="输入关键词，回车添加"></div>
+            <div class="input-group"><label class="input-label">下载所需可可豆</label><input class="input-field" type="number" placeholder="5 ~ 100,000" value="5" min="5" max="100000"><div style="font-size:var(--font-size-small);color:var(--color-text-muted);margin-top:2px;">基础资源在用户权益额度内免费下载</div></div>
+            <button class="btn btn-primary btn-block btn-lg">提交审核</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 社区主页 ==================== -->
+      <div id="page-community" class="page">
+        <div class="top-bar">
+          <div class="top-bar-title gradient-text">技术社区</div>
+          <button class="top-bar-btn" data-action="navigate" data-param="page-new-topic">✏️</button>
+        </div>
+        <div class="guest-banner">
+          <span class="guest-banner-icon">👀</span>
+          <span class="guest-banner-text">游客模式 · 仅可浏览10条热门话题</span>
+          <span class="guest-banner-btn" data-action="show-register-guide" data-param="community_limit">注册</span>
+        </div>
+        <div class="search-bar">
+          <div class="search-input-wrapper" data-action="open-search" data-param="COMMUNITY" style="cursor:pointer;"><span class="search-icon">🔍</span><input type="text" placeholder="搜索话题标题/内容" readonly style="cursor:pointer;"></div>
+        </div>
+        <div class="content-area" style="padding:0 var(--spacing-lg) var(--spacing-lg);">
+          <div class="section-header" style="padding-left:0;padding-right:0;"><div class="section-title">话题分类</div></div>
+          <div class="category-grid-5">
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:var(--color-accent-light);">🏗️</div><div class="category-name">可靠性设计</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(245,158,11,0.15);">📡</div><div class="category-name">信号测试</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(16,185,129,0.15);">🌡️</div><div class="category-name">环境实验</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(239,68,68,0.15);">🔌</div><div class="category-name">元器件</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(139,92,246,0.15);">🔬</div><div class="category-name">失效分析</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(59,130,246,0.15);">📏</div><div class="category-name">标准解读</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(245,158,11,0.15);">✅</div><div class="category-name">质量管理</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(16,185,129,0.15);">⚙️</div><div class="category-name">工艺可靠性</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(239,68,68,0.15);">📰</div><div class="category-name">行业动态</div></div>
+            <div class="category-item" data-action="navigate" data-param="page-community-category"><div class="category-icon-box" style="background:rgba(139,92,246,0.15);">❓</div><div class="category-name">综合问答</div></div>
+          </div>
+          <div class="section-header" style="padding-left:0;padding-right:0;"><div class="section-title">🔥 热门话题</div></div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+            <div class="card topic-card" data-action="navigate" data-param="page-topic-detail">
+              <div class="tag-row"><span class="tag tag-gold">🏆 悬赏 50🫘</span><span class="tag tag-accent">失效分析</span><span class="tag tag-warning">讨论中</span></div>
+              <div class="topic-title">BGA焊点开裂的根因分析方法</div>
+              <div class="topic-desc">产品在温度循环测试后出现BGA焊点开裂，求教各位大佬如何系统性地进行根因分析...</div>
+              <div class="topic-meta"><span>💬 12 · 👍 28 · 👀 456</span><span>2小时前</span></div>
+            </div>
+            <div class="card topic-card" data-action="navigate" data-param="page-topic-detail">
+              <div class="tag-row"><span class="tag tag-accent">可靠性设计</span><span class="tag tag-success">已解决</span></div>
+              <div class="topic-title">如何选择合适的降额系数？</div>
+              <div class="topic-desc">不同类型元器件的降额系数选择依据是什么？有没有系统的参考标准？</div>
+              <div class="topic-meta"><span>💬 8 · 👍 35 · 👀 312</span><span>昨天</span></div>
+            </div>
+            <div class="card topic-card" data-action="navigate" data-param="page-topic-detail">
+              <div class="tag-row"><span class="tag tag-accent">环境实验</span><span class="tag tag-warning">最新</span><span class="tag tag-essence">精华</span></div>
+              <div class="topic-title">高低温冲击试验的温变率如何确定？</div>
+              <div class="topic-desc">请教各位，在进行高低温冲击试验时，温变率应该根据什么来确定？</div>
+              <div class="topic-meta"><span>💬 5 · 👍 19 · 👀 189</span><span>3天前</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-item" data-tab="ask"><span class="nav-icon">🤖</span><span class="nav-label">爱问</span></button>
+          <button class="nav-item" data-tab="resource"><span class="nav-icon">📚</span><span class="nav-label">资源</span></button>
+          <button class="nav-item active" data-tab="community"><span class="nav-icon">💬</span><span class="nav-label">社区</span></button>
+          <button class="nav-item" data-tab="my"><span class="nav-icon">👤</span><span class="nav-label">我的</span></button>
+        </div>
+      </div>
+
+      <!-- ==================== 话题详情页 ==================== -->
+      <div id="page-topic-detail" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">话题详情</div>
+          <button class="top-bar-btn" data-action="show-modal" data-param="modal-topic-more">⋯</button>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div class="tag-row" style="margin-bottom:var(--spacing-md);"><span class="tag tag-gold">🏆 悬赏 50🫘</span><span class="tag tag-accent">失效分析</span><span class="tag tag-warning">讨论中</span></div>
+          <h2 style="font-size:var(--font-size-h2);font-weight:700;margin-bottom:var(--spacing-md);">BGA焊点开裂的根因分析方法</h2>
+          <div style="display:flex;align-items:center;gap:var(--spacing-md);margin-bottom:var(--spacing-lg);">
+            <div class="avatar avatar-sm">李</div>
+            <div><div style="font-size:var(--font-size-caption);font-weight:500;">李工 · 熟手</div><div style="font-size:var(--font-size-small);color:var(--color-text-muted);">2小时前发布</div></div>
+          </div>
+          <div style="font-size:var(--font-size-body);color:var(--color-text-secondary);line-height:var(--line-height-body);margin-bottom:var(--spacing-xl);">产品在温度循环测试后出现BGA焊点开裂，求教各位大佬如何系统性地进行根因分析？目前已做了切片分析，发现开裂位置在IMC层附近，但不确定是工艺问题还是设计问题。有经验的大佬帮忙分析下，谢谢！</div>
+          <div class="topic-actions">
+            <button class="icon-btn" data-action="like" style="display:flex;align-items:center;gap:4px;font-size:var(--font-size-caption);">👍 28</button>
+            <button class="icon-btn" data-action="dislike" style="display:flex;align-items:center;gap:4px;font-size:var(--font-size-caption);">👎 1</button>
+            <button class="btn btn-ghost btn-sm" data-action="follow">+关注</button>
+            <button class="icon-btn" data-action="share" style="display:flex;align-items:center;gap:4px;font-size:var(--font-size-caption);">🔗 分享</button>
+          </div>
+          <div class="section-header" style="padding-left:0;padding-right:0;margin-top:var(--spacing-lg);"><div class="section-title">回复 (12)</div></div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-lg);">
+            <div class="reply-item">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#10b981,#059669);">王</div>
+              <div class="reply-content">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:var(--font-size-caption);font-weight:500;">王专家 · 老炮</span><span class="tag tag-success" style="font-size:10px;">✓ 最佳回答</span></div>
+                <div class="reply-text">IMC层开裂通常与以下因素有关：1. 回流焊温度曲线不合理导致IMC过厚；2. PCB焊盘设计不满足BGA要求；3. 材料CTE不匹配。建议先检查回流焊曲线和IMC厚度...</div>
+                <div class="reply-meta"><span>👍 15</span><span>1小时前</span></div>
+              </div>
+            </div>
+            <div class="reply-item">
+              <div class="avatar avatar-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);">陈</div>
+              <div class="reply-content">
+                <span style="font-size:var(--font-size-caption);font-weight:500;">陈工 · 入门</span>
+                <div class="reply-text">补充一点，如果是无铅工艺，SAC305焊料的IMC生长特性与有铅差异很大，建议做EDS成分分析确认IMC类型。</div>
+                <div class="reply-meta"><span>👍 8</span><span>45分钟前</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="chat-input-bar" style="bottom:0;">
+          <div style="display:flex;gap:var(--spacing-sm);align-items:center;">
+            <input class="input-field" style="flex:1;border-radius:var(--radius-pill);padding:10px 16px;" placeholder="写回复...">
+            <button class="btn btn-primary btn-sm">发送</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 社区分类页 ==================== -->
+      <div id="page-community-category" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">失效分析</div>
+          <button class="top-bar-btn" data-action="open-search" data-param="COMMUNITY">🔍</button>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">最新</button>
+          <button class="tab-item" data-action="tab-switch">精华</button>
+          <button class="tab-item" data-action="tab-switch">悬赏</button>
+          <button class="tab-item" data-action="tab-switch">已解决</button>
+          <div class="tab-indicator" style="left:0;width:25%;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+            <div class="card topic-card" data-action="navigate" data-param="page-topic-detail">
+              <div class="tag-row"><span class="tag tag-gold">🏆 悬赏 50🫘</span><span class="tag tag-warning">讨论中</span></div>
+              <div class="topic-title">BGA焊点开裂的根因分析方法</div>
+              <div class="topic-meta"><span>💬 12 · 👍 28 · 👀 456</span><span>2小时前</span></div>
+            </div>
+            <div class="card topic-card" data-action="navigate" data-param="page-topic-detail">
+              <div class="tag-row"><span class="tag tag-success">已解决</span></div>
+              <div class="topic-title">ESD失效的典型特征与防护方案</div>
+              <div class="topic-meta"><span>💬 6 · 👍 22 · 👀 289</span><span>昨天</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 发起新话题页 ==================== -->
+      <div id="page-new-topic" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">发起新话题</div>
+          <button class="top-bar-btn" style="color:var(--color-accent);font-weight:600;font-size:var(--font-size-body);">发布</button>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-xl);">
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-lg);">
+            <div class="input-group"><label class="input-label">标题<span class="required-mark">*</span></label><input class="input-field" type="text" placeholder="请输入话题标题（5-100字）" maxlength="100"></div>
+            <div class="input-group"><label class="input-label">分类<span class="required-mark">*</span></label><select class="input-field" style="appearance:auto;"><option value="">请选择分类</option><option>可靠性设计</option><option>信号测试</option><option>环境实验</option><option>元器件</option><option>失效分析</option><option>标准解读</option><option>质量管理</option><option>工艺可靠性</option><option>行业动态</option><option>综合问答</option></select></div>
+            <div class="input-group"><label class="input-label">内容<span class="required-mark">*</span></label><textarea class="input-field" rows="6" placeholder="详细描述你的问题或观点（10-2000字）" style="resize:none;"></textarea></div>
+            <div class="input-group"><label class="input-label">上传附件（可选）</label>
+              <div class="upload-zone" style="padding:var(--spacing-xl);margin-bottom:0;">
+                <div style="font-size:24px;">📎</div>
+                <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);margin-top:4px;">添加图片/文件</div>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">设置悬赏（可选）</label>
+              <div style="display:flex;align-items:center;gap:var(--spacing-sm);">
+                <input class="input-field" type="number" placeholder="0" min="0" style="width:100px;">
+                <span style="font-size:var(--font-size-body);color:var(--color-text-tertiary);">🫘 可可豆</span>
+              </div>
+              <div style="font-size:var(--font-size-small);color:var(--color-text-muted);margin-top:4px;">悬赏将激励更多专业人士参与讨论</div>
+            </div>
+            <div class="agreement-row">
+              <div class="checkbox-wrapper" data-action="toggle-checkbox"><div class="checkbox"></div></div>
+              <span>我已阅读并同意 <a href="#">《社区发帖规范》</a></span>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg">发布话题</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 我的页面 ==================== -->
+      <div id="page-my" class="page">
+        <div class="top-bar">
+          <div class="top-bar-title">我的</div>
+          <button class="top-bar-btn" data-action="navigate" data-param="page-settings">⚙️</button>
+        </div>
+        <div class="content-area">
+          <div style="padding:var(--spacing-lg);display:flex;align-items:center;gap:var(--spacing-lg);margin-bottom:var(--spacing-md);">
+            <div class="avatar avatar-lg" id="my-avatar">😊</div>
+            <div style="flex:1;">
+              <div style="font-size:var(--font-size-h3);font-weight:600;" id="my-nickname">点击登录</div>
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-top:2px;" id="my-level">登录后享受完整功能</div>
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="navigate" data-param="page-login" id="my-login-btn">登录/注册</button>
+          </div>
+
+          <div style="display:flex;gap:var(--spacing-md);padding:0 var(--spacing-lg);margin-bottom:var(--spacing-lg);">
+            <div class="stat-card"><div class="stat-value" style="color:var(--color-gold);" id="my-beans">0</div><div class="stat-label">🫘 可可豆</div></div>
+            <div class="stat-card"><div class="stat-value" style="color:var(--color-accent);" id="my-credit">--</div><div class="stat-label">⭐ 信誉分</div></div>
+            <div class="stat-card"><div class="stat-value" id="my-topics">0</div><div class="stat-label">📝 话题</div></div>
+          </div>
+
+          <div class="checkin-card">
+            <div style="font-size:var(--font-size-h3);font-weight:600;margin-bottom:var(--spacing-sm);">📅 每日签到</div>
+            <div style="font-size:var(--font-size-caption);color:var(--color-text-tertiary);margin-bottom:var(--spacing-md);">签到可获得可可豆和信誉分奖励</div>
+            <div class="checkin-streak">
+              <div class="streak-day checked">一</div>
+              <div class="streak-day checked">二</div>
+              <div class="streak-day checked">三</div>
+              <div class="streak-day today">四</div>
+              <div class="streak-day">五</div>
+              <div class="streak-day">六</div>
+              <div class="streak-day">日</div>
+            </div>
+            <button class="btn btn-primary btn-sm" data-action="checkin" id="checkin-btn">签到 +2🫘</button>
+          </div>
+
+          <div style="margin-top:var(--spacing-md);">
+            <div class="menu-item" data-action="navigate" data-param="page-my-resources">
+              <div class="menu-icon" style="background:var(--color-accent-light);">📚</div>
+              <div class="menu-text">我的资源</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-my-topics">
+              <div class="menu-icon" style="background:rgba(16,185,129,0.15);">💬</div>
+              <div class="menu-text">我的话题</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-my-collections">
+              <div class="menu-icon" style="background:rgba(245,158,11,0.15);">⭐</div>
+              <div class="menu-text">我的收藏</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-notification">
+              <div class="menu-icon" style="background:rgba(239,68,68,0.15);">🔔</div>
+              <div class="menu-text">消息通知</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-feedback">
+              <div class="menu-icon" style="background:rgba(139,92,246,0.15);">📝</div>
+              <div class="menu-text">意见反馈</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-invite">
+              <div class="menu-icon" style="background:rgba(59,130,246,0.15);">🎁</div>
+              <div class="menu-text">邀请好友</div>
+              <span class="menu-arrow">›</span>
+            </div>
+            <div class="menu-item" data-action="navigate" data-param="page-settings">
+              <div class="menu-icon" style="background:rgba(100,116,139,0.15);">⚙️</div>
+              <div class="menu-text">设置</div>
+              <span class="menu-arrow">›</span>
+            </div>
+          </div>
+        </div>
+        <div class="bottom-nav">
+          <button class="nav-item" data-tab="ask"><span class="nav-icon">🤖</span><span class="nav-label">爱问</span></button>
+          <button class="nav-item" data-tab="resource"><span class="nav-icon">📚</span><span class="nav-label">资源</span></button>
+          <button class="nav-item" data-tab="community"><span class="nav-icon">💬</span><span class="nav-label">社区</span></button>
+          <button class="nav-item active" data-tab="my"><span class="nav-icon">👤</span><span class="nav-label">我的</span></button>
+        </div>
+      </div>
+
+      <!-- ==================== 通知中心页 ==================== -->
+      <div id="page-notification" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">消息通知</div>
+          <button class="top-bar-btn" style="font-size:var(--font-size-caption);color:var(--color-accent);">全部已读</button>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">系统</button>
+          <button class="tab-item" data-action="tab-switch">互动</button>
+          <button class="tab-item" data-action="tab-switch">服务</button>
+          <div class="tab-indicator" style="left:0;width:33.33%;"></div>
+        </div>
+        <div class="content-area">
+          <div class="notif-item unread">
+            <div class="notif-dot"></div>
+            <div class="notif-content">
+              <div class="notif-title">🎉 欢迎加入 ReliHub</div>
+              <div class="notif-desc">注册成功！完成个人档案可获得额外可可豆奖励</div>
+            </div>
+            <div class="notif-time">刚刚</div>
+          </div>
+          <div class="notif-item unread">
+            <div class="notif-dot"></div>
+            <div class="notif-content">
+              <div class="notif-title">🏆 早鸟奖励到账</div>
+              <div class="notif-desc">恭喜获得20可可豆早鸟奖励，快去使用吧！</div>
+            </div>
+            <div class="notif-time">1分钟前</div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot read"></div>
+            <div class="notif-content">
+              <div class="notif-title">📢 系统公告</div>
+              <div class="notif-desc">ReliHub MVP版本正式上线，欢迎体验并提出宝贵意见</div>
+            </div>
+            <div class="notif-time">1小时前</div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot read"></div>
+            <div class="notif-content">
+              <div class="notif-title">👍 王专家赞了你的回复</div>
+              <div class="notif-desc">在话题"BGA焊点开裂"中</div>
+            </div>
+            <div class="notif-time">3小时前</div>
+          </div>
+          <div class="notif-item">
+            <div class="notif-dot read"></div>
+            <div class="notif-content">
+              <div class="notif-title">📥 资源审核通过</div>
+              <div class="notif-desc">你上传的"降额设计速查表"已通过审核</div>
+            </div>
+            <div class="notif-time">昨天</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 意见反馈页 ==================== -->
+      <div id="page-feedback" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">意见反馈</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">提交反馈</button>
+          <button class="tab-item" data-action="tab-switch">反馈历史</button>
+          <div class="tab-indicator" style="left:0;width:50%;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-xl);">
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-lg);">
+            <div class="input-group">
+              <label class="input-label">反馈类型<span class="required-mark">*</span></label>
+              <select class="input-field" style="appearance:auto;">
+                <option value="">请选择类型</option>
+                <option>功能建议</option>
+                <option>Bug反馈</option>
+                <option>内容投诉</option>
+                <option>其他</option>
+              </select>
+            </div>
+            <div class="input-group">
+              <label class="input-label">详细描述<span class="required-mark">*</span></label>
+              <textarea class="input-field" rows="5" placeholder="请详细描述你的问题或建议（10-1000字）" style="resize:none;"></textarea>
+            </div>
+            <div class="input-group">
+              <label class="input-label">上传截图（可选）</label>
+              <div class="upload-zone" style="padding:var(--spacing-xl);margin-bottom:0;">
+                <div style="font-size:24px;">📷</div>
+                <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);margin-top:4px;">添加截图</div>
+              </div>
+            </div>
+            <div class="input-group">
+              <label class="input-label">联系方式（可选）</label>
+              <input class="input-field" type="text" placeholder="手机号或邮箱，方便我们联系你">
+            </div>
+            <button class="btn btn-primary btn-block btn-lg">提交反馈</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 设置页 ==================== -->
+      <div id="page-settings" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">设置</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="content-area">
+          <div class="menu-item" data-action="navigate" data-param="page-profile-edit">
+            <div class="menu-icon" style="background:var(--color-accent-light);">👤</div>
+            <div class="menu-text">个人资料</div>
+            <span class="menu-arrow">›</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(16,185,129,0.15);">🔒</div>
+            <div class="menu-text">账号安全</div>
+            <span class="menu-arrow">›</span>
+          </div>
+          <div class="divider"></div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(245,158,11,0.15);">🔔</div>
+            <div class="menu-text">通知设置</div>
+            <div class="switch on" data-action="toggle-switch"></div>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(139,92,246,0.15);">🌙</div>
+            <div class="menu-text">深色模式</div>
+            <div class="switch on" data-action="toggle-switch"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(59,130,246,0.15);">📖</div>
+            <div class="menu-text">用户协议</div>
+            <span class="menu-arrow">›</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(100,116,139,0.15);">🔒</div>
+            <div class="menu-text">隐私政策</div>
+            <span class="menu-arrow">›</span>
+          </div>
+          <div class="menu-item">
+            <div class="menu-icon" style="background:rgba(100,116,139,0.15);">ℹ️</div>
+            <div class="menu-text">关于 ReliHub</div>
+            <span class="menu-arrow">›</span>
+          </div>
+          <div class="divider"></div>
+          <div style="padding:var(--spacing-xl);">
+            <button class="btn btn-secondary btn-block" style="color:var(--color-error);border-color:rgba(239,68,68,0.3);">退出登录</button>
+            <div style="text-align:center;font-size:var(--font-size-small);color:var(--color-text-muted);margin-top:var(--spacing-md);">ReliHub v1.0.0 (MVP)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 邀请好友页 ==================== -->
+      <div id="page-invite" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">邀请好友</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-xl);text-align:center;">
+          <div style="font-size:48px;margin-bottom:var(--spacing-lg);">🎁</div>
+          <div style="font-size:var(--font-size-h2);font-weight:700;margin-bottom:var(--spacing-sm);">邀请好友，各得10🫘</div>
+          <div style="font-size:var(--font-size-body);color:var(--color-text-tertiary);margin-bottom:var(--spacing-xl);line-height:var(--line-height-body);">每成功邀请一位好友注册并完善个人档案，你和好友各获得10个可可豆奖励</div>
+          <div class="card" style="margin-bottom:var(--spacing-xl);">
+            <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);margin-bottom:var(--spacing-sm);">我的邀请码</div>
+            <div style="font-size:var(--font-size-h2);font-weight:700;letter-spacing:4px;color:var(--color-accent);">RELI2026</div>
+            <button class="btn btn-primary btn-sm" style="margin-top:var(--spacing-md);">复制邀请码</button>
+          </div>
+          <div style="display:flex;gap:var(--spacing-md);">
+            <button class="btn btn-wechat" style="flex:1;">💬 微信分享</button>
+            <button class="btn btn-secondary" style="flex:1;">🔗 复制链接</button>
+          </div>
+          <div style="margin-top:var(--spacing-xl);font-size:var(--font-size-caption);color:var(--color-text-muted);">
+            已邀请 <strong style="color:var(--color-accent);">3</strong> 位好友 · 获得 <strong style="color:var(--color-gold);">30</strong> 🫘
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 我的资源/话题/收藏页 ==================== -->
+      <div id="page-my-resources" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">我的资源</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">已上传</button>
+          <button class="tab-item" data-action="tab-switch">已下载</button>
+          <div class="tab-indicator" style="left:0;width:50%;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div class="empty-state">
+            <div class="empty-state-icon">📚</div>
+            <div class="empty-state-text">暂无资源，去分享你的第一个资源吧</div>
+            <button class="btn btn-primary btn-sm" data-action="navigate" data-param="page-resource-upload">分享资源</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-my-topics" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">我的话题</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="tab-bar">
+          <button class="tab-item active" data-action="tab-switch">我发起的</button>
+          <button class="tab-item" data-action="tab-switch">我回复的</button>
+          <div class="tab-indicator" style="left:0;width:50%;"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div class="empty-state">
+            <div class="empty-state-icon">💬</div>
+            <div class="empty-state-text">暂无话题，去社区参与讨论吧</div>
+            <button class="btn btn-primary btn-sm" data-action="navigate" data-param="page-community">浏览社区</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-my-collections" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">我的收藏</div>
+          <div style="width:32px"></div>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-lg);">
+          <div class="empty-state">
+            <div class="empty-state-icon">⭐</div>
+            <div class="empty-state-text">暂无收藏内容</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="page-profile-edit" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="top-bar-title">编辑资料</div>
+          <button class="top-bar-btn" style="color:var(--color-accent);font-weight:600;font-size:var(--font-size-body);">保存</button>
+        </div>
+        <div class="content-area" style="padding:var(--spacing-xl);">
+          <div class="profile-avatar-upload">
+            <div class="profile-avatar-circle">😊</div>
+            <span style="font-size:var(--font-size-caption);color:var(--color-accent);">更换头像</span>
+          </div>
+          <div class="profile-form">
+            <div class="input-group"><label class="input-label">昵称<span class="required-mark">*</span></label><input class="input-field" type="text" value="可靠性工程师" maxlength="20"></div>
+            <div class="input-group"><label class="input-label">性别</label>
+              <div style="display:flex;gap:var(--spacing-md);"><button class="btn btn-primary btn-sm" style="flex:1">男</button><button class="btn btn-secondary btn-sm" style="flex:1">女</button></div>
+            </div>
+            <div class="input-group"><label class="input-label">单位</label><input class="input-field" type="text" value="某科技公司"></div>
+            <div class="input-group"><label class="input-label">职务</label><input class="input-field" type="text" value="质量工程师"></div>
+            <div class="input-group"><label class="input-label">Email</label><input class="input-field" type="email" value="engineer@example.com"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 搜索结果页 ==================== -->
+      <div id="page-search" class="page">
+        <div class="top-bar">
+          <button class="top-bar-btn" data-action="back">←</button>
+          <div class="search-input-wrapper" style="flex:1;">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="search-input" placeholder="搜索" autofocus>
+            <span class="top-bar-btn" style="width:24px;height:24px;font-size:14px;" id="search-clear">✕</span>
+          </div>
+          <button class="top-bar-btn" style="color:var(--color-accent);font-weight:600;font-size:var(--font-size-body);width:auto;" id="search-submit">搜索</button>
+        </div>
+        <div class="tab-bar" id="search-tabs">
+          <button class="tab-item active" data-action="search-tab" data-type="RESOURCE">资源</button>
+          <button class="tab-item" data-action="search-tab" data-type="COMMUNITY">社区</button>
+          <button class="tab-item" data-action="search-tab" data-type="AI">爱问</button>
+          <div class="tab-indicator" style="left:0;width:33.33%;"></div>
+        </div>
+        <div class="content-area" id="search-content">
+          <div id="search-hot" style="padding:var(--spacing-lg);">
+            <div class="section-header" style="padding:0 0 var(--spacing-md);">
+              <div class="section-title" style="font-size:var(--font-size-body);">🔥 热门搜索</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:var(--spacing-sm);">
+              <span class="tag tag-accent" style="cursor:pointer;">降额设计</span>
+              <span class="tag tag-accent" style="cursor:pointer;">HALT测试</span>
+              <span class="tag tag-accent" style="cursor:pointer;">FMEA</span>
+              <span class="tag tag-accent" style="cursor:pointer;">ESD防护</span>
+              <span class="tag tag-accent" style="cursor:pointer;">可靠性增长</span>
+              <span class="tag tag-accent" style="cursor:pointer;">PCB设计</span>
+              <span class="tag tag-accent" style="cursor:pointer;">MTBF计算</span>
+              <span class="tag tag-accent" style="cursor:pointer;">环境试验</span>
+            </div>
+            <div class="section-header" style="padding:var(--spacing-xl) 0 var(--spacing-md);">
+              <div class="section-title" style="font-size:var(--font-size-body);">🕐 搜索历史</div>
+              <span class="section-action" id="clear-search-history">清空</span>
+            </div>
+            <div id="search-history-list" style="display:flex;flex-direction:column;gap:var(--spacing-sm);">
+              <div class="history-item" style="padding:var(--spacing-sm) 0;border:none;">
+                <div class="history-item-content"><div class="history-item-title" style="font-weight:400;">电容降额设计规范</div></div>
+                <span style="color:var(--color-text-muted);cursor:pointer;" data-action="delete-search-history">✕</span>
+              </div>
+              <div class="history-item" style="padding:var(--spacing-sm) 0;border:none;">
+                <div class="history-item-content"><div class="history-item-title" style="font-weight:400;">HALT测试流程</div></div>
+                <span style="color:var(--color-text-muted);cursor:pointer;" data-action="delete-search-history">✕</span>
+              </div>
+              <div class="history-item" style="padding:var(--spacing-sm) 0;border:none;">
+                <div class="history-item-content"><div class="history-item-title" style="font-weight:400;">FMEA分析方法</div></div>
+                <span style="color:var(--color-text-muted);cursor:pointer;" data-action="delete-search-history">✕</span>
+              </div>
+            </div>
+          </div>
+          <div id="search-results" style="display:none;padding:var(--spacing-lg);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-md);">
+              <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);">找到 <strong style="color:var(--color-accent);">3</strong> 个相关结果</div>
+              <select class="input-field" style="width:auto;padding:4px 8px;font-size:var(--font-size-caption);appearance:auto;background:var(--color-bg-input);">
+                <option>相关性优先</option>
+                <option>最新上架</option>
+                <option>综合热度</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--spacing-md);">
+              <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+                <div class="tag-row"><span class="tag tag-accent">标准规范</span><span class="tag tag-gold">精华</span></div>
+                <div class="resource-title">GJB/Z 35-93 <mark style="background:rgba(0,136,255,0.3);color:var(--color-accent);padding:0 2px;border-radius:2px;">降额设计</mark>准则</div>
+                <div class="resource-desc">元器件降额设计是可靠性设计的重要手段，本标准规定了各类电子元器件的降额准则...</div>
+                <div class="resource-meta"><span>📥 1,234 · 👍 89</span><span class="resource-price">5 🫘</span></div>
+              </div>
+              <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+                <div class="tag-row"><span class="tag tag-accent">应用笔记</span></div>
+                <div class="resource-title">电容<mark style="background:rgba(0,136,255,0.3);color:var(--color-accent);padding:0 2px;border-radius:2px;">降额设计</mark>速查表</div>
+                <div class="resource-desc">涵盖各类电容器的降额因子、使用温度范围及推荐工作电压比...</div>
+                <div class="resource-meta"><span>📥 567 · 👍 45</span><span class="resource-price">免费</span></div>
+              </div>
+              <div class="card resource-card" data-action="navigate" data-param="page-resource-detail">
+                <div class="tag-row"><span class="tag tag-accent">培训资料</span></div>
+                <div class="resource-title"><mark style="background:rgba(0,136,255,0.3);color:var(--color-accent);padding:0 2px;border-radius:2px;">降额设计</mark>在电源产品中的应用实践</div>
+                <div class="resource-desc">电源产品中关键元器件的降额设计方法与案例分析...</div>
+                <div class="resource-meta"><span>📥 321 · 👍 28</span><span class="resource-price">3 🫘</span></div>
+              </div>
+            </div>
+          </div>
+          <div id="search-empty" style="display:none;">
+            <div class="empty-state">
+              <div class="empty-state-icon">🔍</div>
+              <div class="empty-state-text">未找到包含"xxx"的结果，试试其他关键词？</div>
+              <button class="btn btn-primary btn-sm">发起新对话</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 弹窗：注册引导 ==================== -->
+      <div id="modal-register-guide" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-handle"></div>
+          <div class="register-guide-content">
+            <div class="register-guide-title">加入 ReliHub</div>
+            <div class="early-bird-badge">🌟 早鸟福利 · 注册即得50🫘</div>
+            <div class="register-guide-benefits">
+              <div class="benefit-item"><span class="benefit-icon">✅</span><span class="benefit-text">无限AI对话，专业可靠性问答</span></div>
+              <div class="benefit-item"><span class="benefit-icon">✅</span><span class="benefit-text">下载海量专业资源</span></div>
+              <div class="benefit-item"><span class="benefit-icon">✅</span><span class="benefit-text">参与社区讨论，悬赏互动</span></div>
+              <div class="benefit-item"><span class="benefit-icon">✅</span><span class="benefit-text">签到赚可可豆，提升信誉</span></div>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="navigate" data-param="page-login" onclick="App.hideModal('modal-register-guide')">立即注册</button>
+            <div style="margin-top:var(--spacing-md);font-size:var(--font-size-caption);color:var(--color-text-muted);cursor:pointer;" data-action="hide-modal" data-param="modal-register-guide">继续浏览</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 弹窗：历史对话 ==================== -->
+      <div id="modal-history" class="modal-overlay">
+        <div class="modal-content" style="max-height:70%;">
+          <div class="modal-handle"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg);">
+            <div style="font-size:var(--font-size-h3);font-weight:600;">历史对话</div>
+            <button class="top-bar-btn" data-action="hide-modal" data-param="modal-history">✕</button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:var(--spacing-sm);">
+            <div class="history-item" data-action="navigate" data-param="page-chat" onclick="App.hideModal('modal-history')">
+              <div class="history-item-content"><div class="history-item-title">电容降额设计规范</div><div class="history-item-meta">今天 14:30 · 3轮对话</div></div>
+              <span class="tag tag-accent" style="font-size:10px;">3轮</span>
+            </div>
+            <div class="history-item" data-action="navigate" data-param="page-chat" onclick="App.hideModal('modal-history')">
+              <div class="history-item-content"><div class="history-item-title">HALT测试流程咨询</div><div class="history-item-meta">昨天 09:15 · 7轮对话</div></div>
+              <span class="tag tag-accent" style="font-size:10px;">7轮</span>
+            </div>
+            <div class="history-item" data-action="navigate" data-param="page-chat" onclick="App.hideModal('modal-history')">
+              <div class="history-item-content"><div class="history-item-title">FMEA分析方法</div><div class="history-item-meta">4月10日 · 5轮对话</div></div>
+              <span class="tag tag-success" style="font-size:10px;">已解决</span>
+            </div>
+            <div class="history-item">
+              <div class="history-item-content"><div class="history-item-title">热设计仿真工具推荐</div><div class="history-item-meta">4月8日 · 4轮对话</div></div>
+              <span class="tag tag-success" style="font-size:10px;">已解决</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ==================== 弹窗：话题更多操作 ==================== -->
+      <div id="modal-topic-more" class="modal-overlay">
+        <div class="modal-content" style="max-height:40%;">
+          <div class="modal-handle"></div>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div class="menu-item" data-action="hide-modal" data-param="modal-topic-more"><div class="menu-icon">🔗</div><div class="menu-text">分享话题</div></div>
+            <div class="menu-item" data-action="hide-modal" data-param="modal-topic-more"><div class="menu-icon">⭐</div><div class="menu-text">收藏话题</div></div>
+            <div class="menu-item" data-action="hide-modal" data-param="modal-topic-more"><div class="menu-icon">🚫</div><div class="menu-text">屏蔽此用户</div></div>
+            <div class="menu-item" data-action="hide-modal" data-param="modal-topic-more"><div class="menu-icon">⚠️</div><div class="menu-text">举报</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-ai-limit" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-handle"></div>
+          <div style="text-align:center;padding:var(--spacing-lg);">
+            <div style="font-size:48px;margin-bottom:var(--spacing-md);">🤖</div>
+            <div style="font-size:var(--font-size-h3);font-weight:600;margin-bottom:var(--spacing-sm);">今日对话次数已达上限</div>
+            <div style="font-size:var(--font-size-body);color:var(--color-text-tertiary);margin-bottom:var(--spacing-lg);line-height:var(--line-height-body);">注册用户每日可发起15轮AI对话，游客每日3轮。升级为注册用户可获得更多对话次数。</div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="navigate" data-param="page-login" onclick="App.hideModal('modal-ai-limit')">立即注册</button>
+            <div style="margin-top:var(--spacing-md);font-size:var(--font-size-caption);color:var(--color-text-muted);cursor:pointer;" data-action="hide-modal" data-param="modal-ai-limit">明天再来</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="modal-download-confirm" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-handle"></div>
+          <div style="padding:var(--spacing-lg);">
+            <div style="font-size:var(--font-size-h3);font-weight:600;margin-bottom:var(--spacing-md);">确认下载</div>
+            <div style="display:flex;align-items:center;gap:var(--spacing-md);padding:var(--spacing-md);background:var(--color-bg-input);border-radius:var(--radius-lg);margin-bottom:var(--spacing-lg);">
+              <div style="font-size:24px;">📄</div>
+              <div style="flex:1;">
+                <div style="font-weight:500;">GJB/Z 299C 电子设备可靠性预计手册</div>
+                <div style="font-size:var(--font-size-caption);color:var(--color-text-muted);">PDF · 12.5 MB</div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg);">
+              <span style="color:var(--color-text-tertiary);">下载费用</span>
+              <span style="font-size:var(--font-size-h3);font-weight:700;color:var(--color-gold);">5 🫘</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--spacing-lg);font-size:var(--font-size-caption);color:var(--color-text-muted);">
+              <span>当前余额</span>
+              <span>50 🫘</span>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" data-action="download" onclick="App.hideModal('modal-download-confirm')">确认下载</button>
+            <button class="btn btn-secondary btn-block" style="margin-top:var(--spacing-sm);" data-action="hide-modal" data-param="modal-download-confirm">取消</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    function switchLoginTab(el, panelId) {
+      document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.login-panel').forEach(p => p.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById(panelId).classList.add('active');
+    }
+
+    document.querySelectorAll('.modal-overlay').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

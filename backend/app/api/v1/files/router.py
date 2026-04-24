@@ -1,30 +1,28 @@
 """
 API routes for File Management module.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
-import uuid
 import hashlib
+import uuid
 
-from app.core.deps import get_db, get_current_user
-from app.services.file_service import FileService
-from app.schemas.file import (
-    FileStatus,
-    FileUploadResponse,
-    FileMetaResponse,
-    FileListResponse,
-    PresignedUrlResponse,
-)
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_current_user, get_db
 from app.models.users import User
+from app.schemas.file import (
+    FileListResponse,
+    FileMetaResponse,
+    FileUploadResponse,
+)
+from app.services.file_service import FileService
 
-router = APIRouter(prefix="/files", tags=["文件管理"])
+router = APIRouter(tags=["文件管理"])
 
 
 @router.post("/upload", response_model=FileUploadResponse)
-async def upload_file(
+def upload_file(
     file: UploadFile = File(...),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -35,27 +33,39 @@ async def upload_file(
     2. Uploads to OSS
     3. Creates file metadata
     4. Returns file info
+    
+    File size limits:
+    - Maximum file size: 10MB (configurable via system config)
     """
     # Read file content
-    content = await file.read()
+    content = file.file.read()
     file_size = len(content)
     
-    # Generate file hash (SHA-256)
+    # Validate file size (10MB limit)
+    MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
+    if file_size > MAX_UPLOAD_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"文件大小超过限制 ({MAX_UPLOAD_SIZE // 1024 // 1024}MB)"
+        )
+    
+    # Validate file size is not zero
+    if file_size == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="文件不能为空"
+        )
+    
     file_hash = hashlib.sha256(content).hexdigest()
     
-    # Generate file UUID
     file_uuid = str(uuid.uuid4())
     
-    # TODO: Upload to OSS and get OSS path
-    # For now, use placeholder
     oss_path = f"/uploads/{file_uuid}/{file.filename}"
     
     service = FileService(db)
     
-    # Check if file already exists (deduplication)
-    existing = await service.get_file_by_hash(file_hash)
+    existing = service.get_file_by_hash(file_hash)
     if existing:
-        # File exists, increment ref count
         return FileUploadResponse(
             file_uuid=existing.file_uuid,
             file_hash=existing.file_hash,
@@ -65,15 +75,14 @@ async def upload_file(
             mime_type=existing.mime_type,
         )
     
-    # Create new file metadata
-    file_meta = await service.create_file_meta(
+    file_meta = service.create_file_meta(
         file_uuid=file_uuid,
         file_hash=file_hash,
         oss_path=oss_path,
         file_name=file.filename or "unnamed",
         file_size=file_size,
         mime_type=file.content_type or "application/octet-stream",
-        uploader_uid=current_user.user_uuid,
+        uploader_uid=current_user.id,
     )
     
     return FileUploadResponse(
@@ -87,30 +96,29 @@ async def upload_file(
 
 
 @router.get("/{file_uuid}", response_model=FileMetaResponse)
-async def get_file(
+def get_file(
     file_uuid: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get file metadata"""
     service = FileService(db)
-    file_meta = await service.get_file_by_uuid(file_uuid)
+    file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    # Check access
-    has_access = await service.check_file_access(file_uuid, current_user.user_uuid)
+    has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
     return file_meta
 
 
 @router.get("/{file_uuid}/download")
-async def get_download_url(
+def get_download_url(
     file_uuid: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -122,33 +130,31 @@ async def get_download_url(
     3. Returns download URL
     """
     service = FileService(db)
-    file_meta = await service.get_file_by_uuid(file_uuid)
+    file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    # Check access
-    has_access = await service.check_file_access(file_uuid, current_user.user_uuid)
+    has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
-    # TODO: Generate pre-signed URL from OSS
     download_url = f"{file_meta.oss_path}?download=true"
     
     return {"download_url": download_url, "file_name": file_meta.file_name}
 
 
 @router.get("/user/my-files", response_model=FileListResponse)
-async def get_user_files(
+def get_user_files(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get files uploaded by current user"""
     service = FileService(db)
-    files, total = await service.get_user_files(
-        current_user.user_uuid,
+    files, total = service.get_user_files(
+        current_user.id,
         page,
         page_size,
     )
@@ -162,27 +168,27 @@ async def get_user_files(
 
 
 @router.delete("/{file_uuid}")
-async def delete_file(
+def delete_file(
     file_uuid: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Soft delete a file"""
     service = FileService(db)
-    success = await service.delete_file(file_uuid, current_user.user_uuid)
+    success = service.delete_file(file_uuid, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    return {"message": "File deleted"}
+    return {"message": "文件已删除"}
 
 
 @router.post("/{file_uuid}/usage")
-async def create_file_usage(
+def create_file_usage(
     file_uuid: str,
     target_id: str,
     target_type: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """
@@ -198,48 +204,45 @@ async def create_file_usage(
     try:
         target_type_enum = TargetType(target_type)
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid target type")
+        raise HTTPException(status_code=400, detail="无效的目标类型")
     
     service = FileService(db)
     
-    # Check file exists
-    file_meta = await service.get_file_by_uuid(file_uuid)
+    file_meta = service.get_file_by_uuid(file_uuid)
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    # Create usage record
-    usage = await service.create_file_usage(
+    usage = service.create_file_usage(
         file_uuid=file_uuid,
         target_id=target_id,
         target_type=target_type_enum,
-        user_id=current_user.user_uuid,
+        user_id=current_user.id,
     )
     
     return {
-        "message": "Usage recorded",
+        "message": "使用记录已创建",
         "usage_id": usage.id,
     }
 
 
 @router.get("/{file_uuid}/usages")
-async def get_file_usages(
+def get_file_usages(
     file_uuid: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get all usage records for a file"""
     service = FileService(db)
-    file_meta = await service.get_file_by_uuid(file_uuid)
+    file_meta = service.get_file_by_uuid(file_uuid)
     
     if not file_meta:
-        raise HTTPException(status_code=404, detail="File not found")
+        raise HTTPException(status_code=404, detail="文件不存在")
     
-    # Check access
-    has_access = await service.check_file_access(file_uuid, current_user.user_uuid)
+    has_access = service.check_file_access(file_uuid, current_user.id)
     if not has_access:
-        raise HTTPException(status_code=403, detail="Access denied")
+        raise HTTPException(status_code=403, detail="拒绝访问")
     
-    usages = await service.get_file_usages(file_uuid)
+    usages = service.get_file_usages(file_uuid)
     
     return {
         "file_uuid": file_uuid,

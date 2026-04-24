@@ -1,0 +1,5 @@
+# LLM Provider Dependencies
+httpx>=0.26.0
+
+# Token counting (optional, for more accurate counting)
+# tiktoken>=0.5.0  # Uncomment if needed for specific models

@@ -1,10 +1,11 @@
 """
 Pydantic Schemas for Community/Forum module.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class BountyStatus(str, Enum):
@@ -21,8 +22,6 @@ class TopicStatus(str, Enum):
     BLOCKED = "BLOCKED"
     PENDING = "PENDING"
 
-
-# ── Request Schemas ───────────────────────────────────────────────────────────
 
 class TopicCreateRequest(BaseModel):
     """Request schema for creating a topic"""
@@ -55,10 +54,10 @@ class AcceptPostRequest(BaseModel):
     post_id: str = Field(..., description="Post ID to accept as answer")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class PostResponse(BaseModel):
     """Response schema for a single post"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     topic_id: str
     author_id: str
@@ -69,12 +68,11 @@ class PostResponse(BaseModel):
     anonymized_user_hash: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class TopicResponse(BaseModel):
     """Response schema for a single topic"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     author_id: str
     title: str
@@ -86,17 +84,17 @@ class TopicResponse(BaseModel):
     status: TopicStatus
     view_count: int
     post_count: int
+    like_count: int
     heat_score: float
     anonymized_user_hash: Optional[str] = None
     created_at: datetime
     posts: Optional[List[PostResponse]] = None
 
-    class Config:
-        from_attributes = True
-
 
 class TopicListItem(BaseModel):
     """Response schema for topic list item"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     title: str
     author_id: str
@@ -105,11 +103,9 @@ class TopicListItem(BaseModel):
     bounty_status: BountyStatus
     post_count: int
     view_count: int
+    like_count: int
     heat_score: float
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class TopicListResponse(BaseModel):
@@ -130,11 +126,10 @@ class PostListResponse(BaseModel):
 
 class CategoryResponse(BaseModel):
     """Response schema for community category"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     name: str
     parent_id: Optional[int] = None
     level: int
     sort_order: int
-
-    class Config:
-        from_attributes = True

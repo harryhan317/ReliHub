@@ -838,9 +838,7 @@ AI助手 (M1)
 - 管理后台: 独立PC端Web管理系统,无手机边框
 
 **详细设计规范参见:**
-- `docs/06_UI_UX_Design/设计规范_色彩字体图标.md`
-- `docs/06_UI_UX_Design/设计规范_组件库.md`
-- `docs/06_UI_UX_Design/设计规范_移动端布局.md`
+- `docs/01_产品需求/02_总体方案PRD/PRD_前端UI_UX设计需求.md`
 
 ### 5.2 核心设计原则
 

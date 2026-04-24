@@ -1,13 +1,12 @@
 """
 Pydantic Schemas for AI Conversation module.
 """
-from pydantic import BaseModel, Field, field_validator
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
 
+from pydantic import BaseModel, ConfigDict, Field
 
-# ── Request Schemas ────────────────────────────────────────────────────────────
 
 class MessageRole(str, Enum):
     """Message role enum"""
@@ -20,6 +19,11 @@ class MessageRequest(BaseModel):
     """Request schema for sending a message"""
     content: str = Field(..., min_length=1, max_length=2000, description="Message content")
     attachment_ids: Optional[List[str]] = Field(None, description="List of attachment file UUIDs")
+    stream: bool = Field(default=True, description="Whether to stream the response")
+    provider_name: Optional[str] = Field(None, description="LLM provider name")
+    model: Optional[str] = Field(None, description="Model name")
+    temperature: float = Field(default=0.7, ge=0.0, le=2.0, description="Temperature")
+    max_tokens: int = Field(default=2000, ge=1, le=32000, description="Maximum tokens")
 
 
 class CreateSessionRequest(BaseModel):
@@ -28,10 +32,10 @@ class CreateSessionRequest(BaseModel):
     model_type: str = Field(default="general", description="Model type: general or multimodal")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class MessageResponse(BaseModel):
     """Response schema for a single message"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     session_id: str
     role: str
@@ -42,12 +46,11 @@ class MessageResponse(BaseModel):
     feedback_type: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class SessionResponse(BaseModel):
     """Response schema for a session"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: Optional[str] = None
     title: Optional[str] = None
@@ -56,9 +59,6 @@ class SessionResponse(BaseModel):
     total_turns: int
     created_at: datetime
     updated_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class SessionListResponse(BaseModel):

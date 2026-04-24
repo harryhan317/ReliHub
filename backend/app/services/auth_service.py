@@ -5,42 +5,61 @@ Aligned with:
   - API_认证鉴权.md §2 (endpoints)
   - DB_users.md §1 (users table fields)
 """
-import uuid
 import logging
+import uuid
 from datetime import datetime, timezone
 from typing import Optional
 
+from jose import JWTError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.core.exceptions import BusinessException, ErrorCode
 from app.core.security import (
-    hash_password,
-    verify_password,
-    needs_rehash,
     create_access_token,
     create_refresh_token,
     decode_token,
     generate_phone_blind_index,
+    hash_password,
+    needs_rehash,
+    verify_password,
 )
-from app.core.exceptions import BusinessException, ErrorCode
 from app.models.users import User
 from app.services.sms_service import verify_code
 
 logger = logging.getLogger(__name__)
 
-# ── In-memory token blacklist ────────────────────────────────────────────────
-# WARNING [Production TODO]: Replace with Redis SET + TTL matching token expiry.
-#   Key pattern: "token_blacklist:{jti}", TTL = ACCESS_TOKEN_EXPIRE_MINUTES * 60
-#   This ensures blacklisted tokens are auto-cleaned after expiry.
-_token_blacklist: set[str] = set()
+# ── Token blacklist with Redis fallback ───────────────────────────────────────
+# Production: Redis SET + TTL matching token expiry.
+# Fallback: In-memory set when Redis is unavailable.
+from app.core.redis_client import redis_client
+
+_memory_blacklist: set[str] = set()
 
 
 def is_token_blacklisted(jti: str) -> bool:
-    return jti in _token_blacklist
+    """
+    Check if token is blacklisted.
+    Uses Redis if available, falls back to in-memory storage.
+    """
+    if redis_client.is_available:
+        redis_key = f"token_blacklist:{jti}"
+        return redis_client.exists(redis_key)
+    else:
+        return jti in _memory_blacklist
 
 
 def blacklist_token(jti: str) -> None:
-    _token_blacklist.add(jti)
+    """
+    Add token to blacklist.
+    Uses Redis if available, falls back to in-memory storage.
+    """
+    if redis_client.is_available:
+        redis_key = f"token_blacklist:{jti}"
+        ttl_seconds = settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+        redis_client.set(redis_key, "1", ex=ttl_seconds)
+    else:
+        _memory_blacklist.add(jti)
 
 
 # ── Register ─────────────────────────────────────────────────────────────────
@@ -212,7 +231,11 @@ def refresh_access_token(db: Session, refresh_token: str) -> tuple[str, str]:
     Issue a new access+refresh token pair from a valid refresh token.
     API_认证鉴权.md §2.4.
     """
-    payload = decode_token(refresh_token)
+    try:
+        payload = decode_token(refresh_token)
+    except JWTError:
+        raise BusinessException(ErrorCode.AUTH_4005, "Refresh Token 已失效，请重新登录")
+    
     if payload is None or payload.get("type") != "refresh":
         raise BusinessException(ErrorCode.AUTH_4005, "Refresh Token 已失效，请重新登录")
 

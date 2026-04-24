@@ -1,202 +1,171 @@
 """
 API routes for Ledger/Economy module.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional
 
-from app.core.deps import get_db, get_current_user
-from app.services.ledger_service import PointLedgerService, AssetPackageService
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_current_user, get_db, require_admin
+from app.models.administrators import AdminUser
+from app.models.ledger import PointType
+from app.models.users import User
 from app.schemas.ledger import (
-    RechargeRequest,
-    AssetPackagePurchaseRequest,
-    PointLedgerResponse,
-    PointLedgerListResponse,
-    UserBalanceResponse,
+    AssetPackageListResponse,
     AssetPackageResponse,
+    PointLedgerListResponse,
+    PointLedgerResponse,
+    RechargeRequest,
+    UserBalanceResponse,
     UserPurchasedAssetResponse,
 )
-from app.models.users import User
-from app.models.ledger import PointType
+from app.services.interaction_service import CheckinService
+from app.services.ledger_service import AssetPackageService, PointLedgerService
 
-router = APIRouter(prefix="/ledger", tags=["可可豆经济"])
+router = APIRouter(tags=["可可豆经济"])
 
-
-# ── Balance & History Routes ─────────────────────────────────────────────────
 
 @router.get("/balance", response_model=UserBalanceResponse)
-async def get_balance(
-    db: AsyncSession = Depends(get_db),
+def get_balance(
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Get user's current balance"""
     service = PointLedgerService(db)
-    gold_beans, bonus_beans = await service.get_user_balance(current_user.user_uuid)
+    gold_beans, bonus_beans = service.get_user_balance(current_user.id)
     
     return UserBalanceResponse(
-        user_id=current_user.user_uuid,
+        user_id=current_user.id,
         gold_beans=gold_beans,
         bonus_beans=bonus_beans,
         total_beans=gold_beans + bonus_beans,
-        last_updated=None,  # TODO: Get from latest ledger entry
+        last_updated=None,
     )
 
 
-@router.get("/history", response_model=PointLedgerListResponse)
-async def get_ledger_history(
+@router.get("/ledger", response_model=PointLedgerListResponse)
+def get_ledger(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
 ):
-    """Get user's transaction history"""
+    """Get user's point ledger"""
     service = PointLedgerService(db)
-    ledgers, total = await service.get_ledger_history(
-        current_user.user_uuid,
-        page,
-        page_size,
-    )
+    ledgers, total = service.get_user_ledger(current_user.id, page, page_size)
     
     return PointLedgerListResponse(
-        ledgers=[PointLedgerResponse.model_validate(l) for l in ledgers],
+        items=ledgers,
         total=total,
         page=page,
         page_size=page_size,
     )
 
 
-# ── Recharge Routes ───────────────────────────────────────────────────────────
+@router.get("/ledger/{ledger_id}", response_model=PointLedgerResponse)
+def get_ledger_detail(
+    ledger_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get ledger detail"""
+    service = PointLedgerService(db)
+    ledger = service.get_ledger_detail(ledger_id, current_user.id)
+    if not ledger:
+        raise HTTPException(status_code=404, detail="记录不存在")
+    
+    return PointLedgerResponse(**ledger.__dict__)
+
+
+@router.get("/packages", response_model=AssetPackageListResponse)
+def get_packages(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get available asset packages"""
+    service = AssetPackageService(db)
+    packages = service.get_available_packages()
+    
+    return AssetPackageListResponse(
+        items=packages,
+        total=len(packages),
+    )
+
 
 @router.post("/recharge")
-async def recharge(
+def recharge(
     request: RechargeRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """
-    Recharge cocoa beans.
-    
-    This endpoint:
-    1. Creates payment order
-    2. Redirects to payment gateway
-    3. Handles callback (webhook)
-    4. Updates balance
-    """
-    # TODO: Implement payment integration
-    # For now, return placeholder
-    return {
-        "message": "Payment order created",
-        "amount": request.amount,
-        "payment_method": request.payment_method,
-        "order_id": "placeholder_order_id",
-    }
-
-
-# ── Asset Package Routes ──────────────────────────────────────────────────────
-
-@router.get("/packages", response_model=list[AssetPackageResponse])
-async def list_packages(
-    db: AsyncSession = Depends(get_db),
-):
-    """List all available asset packages"""
-    service = AssetPackageService(db)
-    packages = await service.list_packages()
-    return [AssetPackageResponse.model_validate(p) for p in packages]
-
-
-@router.post("/packages/purchase")
-async def purchase_package(
-    request: AssetPackagePurchaseRequest,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Purchase an asset package.
-    
-    This endpoint:
-    1. Validates package exists
-    2. Checks user has sufficient beans
-    3. Deducts beans
-    4. Creates purchased asset record
-    """
-    service = AssetPackageService(db)
-    package = await service.get_package(request.package_id)
-    
-    if not package:
-        raise HTTPException(status_code=404, detail="Package not found")
-    
-    # TODO: Check user balance
-    # TODO: Deduct beans
-    # TODO: Create purchased asset
-    
-    return {
-        "message": "Package purchased",
-        "package_id": package.id,
-        "package_name": package.name,
-    }
-
-
-@router.get("/assets", response_model=list[UserPurchasedAssetResponse])
-async def get_user_assets(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Get user's purchased assets"""
-    service = AssetPackageService(db)
-    assets = await service.get_user_assets(current_user.user_uuid)
-    return [UserPurchasedAssetResponse.model_validate(a) for a in assets]
-
-
-@router.get("/assets/quota")
-async def get_total_quota(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """Get user's total remaining quota"""
-    service = AssetPackageService(db)
-    total_quota = await service.get_total_user_quota(current_user.user_uuid)
-    
-    return {
-        "user_id": current_user.user_uuid,
-        "total_remaining_mb": total_quota,
-    }
-
-
-# ── Admin Routes (TODO: Add admin permission check) ───────────────────────────
-
-@router.post("/admin/grant")
-async def grant_beans(
-    user_id: str,
-    amount: int,
-    point_type: PointType,
-    description: str,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Grant beans to a user (admin only).
-    
-    TODO: Add admin permission check
-    """
+    """Recharge beans"""
     service = PointLedgerService(db)
+    result = service.recharge(current_user.id, request.package_id)
     
-    # Get current balance
-    gold_beans, bonus_beans = await service.get_user_balance(user_id)
-    current_balance = gold_beans if point_type == PointType.GOLD_BEAN else bonus_beans
-    new_balance = current_balance + amount
+    return result
+
+
+@router.post("/checkin")
+def checkin(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Daily check-in.
     
-    # Create ledger entry
-    entry = await service.create_ledger_entry(
-        user_id=user_id,
-        amount=amount,
-        point_type=point_type,
-        order_type="SYSTEM_GIFT",  # type: ignore
-        balance_after=new_balance,
-        description=description,
+    This endpoint:
+    1. Checks if user already checked in today
+    2. If not, awards bonus beans (5 per day)
+    3. Records ledger entry with SIGN_IN order type
+    """
+    service = CheckinService(db)
+    return service.checkin(current_user.id)
+
+
+@router.get("/checkin/status")
+def get_checkin_status(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Get today's check-in status"""
+    service = CheckinService(db)
+    return service.get_checkin_status(current_user.id)
+
+
+@router.get("/admin/ledger")
+def admin_get_ledger(
+    db: Session = Depends(get_db),
+    admin_user: AdminUser = Depends(require_admin),
+    user_id: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """Admin get ledger (all users)"""
+    service = PointLedgerService(db)
+    ledgers, total = service.get_ledger_admin(user_id, page, page_size)
+    
+    return PointLedgerListResponse(
+        items=ledgers,
+        total=total,
+        page=page,
+        page_size=page_size,
     )
+
+
+@router.get("/admin/purchased")
+def admin_get_purchased_assets(
+    db: Session = Depends(get_db),
+    admin_user: AdminUser = Depends(require_admin),
+    user_id: str = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+):
+    """Admin get purchased assets"""
+    service = AssetPackageService(db)
+    assets, total = service.get_purchased_assets_admin(user_id, page, page_size)
     
-    return {
-        "message": "Beans granted",
-        "entry_id": entry.id,
-        "new_balance": new_balance,
-    }
+    return UserPurchasedAssetResponse(
+        items=assets,
+        total=total,
+        page=page,
+        page_size=page_size,
+    )

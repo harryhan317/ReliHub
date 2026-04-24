@@ -1,0 +1,35 @@
+FROM python:3.9-alpine
+
+WORKDIR /app
+
+# 安装系统依赖
+RUN apk add --no-cache \
+    curl \
+    nodejs \
+    npm \
+    bash
+
+# 复制Python依赖文件
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制应用代码
+COPY frontend_auto_starter.py .
+COPY frontend_auto_starter.conf .
+COPY start_frontend_proxy.sh .
+
+# 设置执行权限
+RUN chmod +x start_frontend_proxy.sh
+
+# 安装前端依赖（如果前端目录存在）
+COPY frontend/package.json frontend/package-lock.json ./frontend/
+RUN cd frontend && npm ci --only=production
+
+EXPOSE 8080
+
+# 健康检查
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8080 || exit 1
+
+# 启动命令
+CMD ["python3", "frontend_auto_starter.py"]

@@ -1,29 +1,28 @@
 """
 Service layer for File Management module.
 """
-from typing import Optional, List, Tuple
-from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, and_
 import uuid
+from typing import List, Optional, Tuple
+
+from sqlalchemy import func, select
+from sqlalchemy.orm import Session
 
 from app.models.file_meta import (
     FileMeta,
-    FileUsage,
     FileStatus,
+    FileUsage,
     LifecycleStatus,
     TargetType,
 )
-from app.schemas.file import FileUploadRequest
 
 
 class FileService:
     """Service class for File Management"""
 
-    def __init__(self, db: AsyncSession):
+    def __init__(self, db: Session):
         self.db = db
 
-    async def create_file_meta(
+    def create_file_meta(
         self,
         file_uuid: str,
         file_hash: str,
@@ -48,11 +47,11 @@ class FileService:
         )
         
         self.db.add(file_meta)
-        await self.db.commit()
-        await self.db.refresh(file_meta)
+        self.db.commit()
+        self.db.refresh(file_meta)
         return file_meta
 
-    async def get_file_by_uuid(
+    def get_file_by_uuid(
         self,
         file_uuid: str
     ) -> Optional[FileMeta]:
@@ -61,10 +60,10 @@ class FileService:
             FileMeta.file_uuid == file_uuid,
             FileMeta.lifecycle_status == LifecycleStatus.ACTIVE
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def get_file_by_hash(
+    def get_file_by_hash(
         self,
         file_hash: str
     ) -> Optional[FileMeta]:
@@ -73,10 +72,10 @@ class FileService:
             FileMeta.file_hash == file_hash,
             FileMeta.lifecycle_status == LifecycleStatus.ACTIVE
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return result.scalar_one_or_none()
 
-    async def create_file_usage(
+    def create_file_usage(
         self,
         file_uuid: str,
         target_id: str,
@@ -84,19 +83,17 @@ class FileService:
         user_id: str
     ) -> FileUsage:
         """Create a file usage record"""
-        # Check if usage already exists
         existing_query = select(FileUsage).where(
             FileUsage.file_uuid == file_uuid,
             FileUsage.target_id == target_id,
             FileUsage.target_type == target_type
         )
-        result = await self.db.execute(existing_query)
+        result = self.db.execute(existing_query)
         existing = result.scalar_one_or_none()
         
         if existing:
             return existing
         
-        # Create new usage record
         usage = FileUsage(
             id=str(uuid.uuid4()),
             file_uuid=file_uuid,
@@ -107,45 +104,42 @@ class FileService:
         
         self.db.add(usage)
         
-        # Increment ref count
-        file_meta = await self.get_file_by_uuid(file_uuid)
+        file_meta = self.get_file_by_uuid(file_uuid)
         if file_meta:
             file_meta.ref_counts += 1
         
-        await self.db.commit()
-        await self.db.refresh(usage)
+        self.db.commit()
+        self.db.refresh(usage)
         return usage
 
-    async def update_file_status(
+    def update_file_status(
         self,
         file_uuid: str,
         status: FileStatus
     ) -> bool:
         """Update file status"""
-        file_meta = await self.get_file_by_uuid(file_uuid)
+        file_meta = self.get_file_by_uuid(file_uuid)
         
         if not file_meta:
             return False
         
         file_meta.status = status
-        await self.db.commit()
+        self.db.commit()
         return True
 
-    async def get_user_files(
+    def get_user_files(
         self,
         user_id: str,
         page: int = 1,
         page_size: int = 20
     ) -> Tuple[List[FileMeta], int]:
         """Get files uploaded by a user"""
-        # Get total count
         count_query = select(func.count()).where(
             FileMeta.uploader_uid == user_id,
             FileMeta.lifecycle_status == LifecycleStatus.ACTIVE
         )
-        total = (await self.db.execute(count_query)).scalar()
+        total = self.db.execute(count_query).scalar()
         
-        # Get paginated results
         query = (
             select(FileMeta)
             .where(
@@ -157,27 +151,27 @@ class FileService:
             .limit(page_size)
         )
         
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         files = result.scalars().all()
         
         return list(files), total
 
-    async def delete_file(
+    def delete_file(
         self,
         file_uuid: str,
         user_id: str
     ) -> bool:
         """Soft delete a file"""
-        file_meta = await self.get_file_by_uuid(file_uuid)
+        file_meta = self.get_file_by_uuid(file_uuid)
         
         if not file_meta or file_meta.uploader_uid != user_id:
             return False
         
         file_meta.lifecycle_status = LifecycleStatus.SOFT_DELETED
-        await self.db.commit()
+        self.db.commit()
         return True
 
-    async def get_file_usages(
+    def get_file_usages(
         self,
         file_uuid: str
     ) -> List[FileUsage]:
@@ -185,30 +179,28 @@ class FileService:
         query = select(FileUsage).where(
             FileUsage.file_uuid == file_uuid
         )
-        result = await self.db.execute(query)
+        result = self.db.execute(query)
         return list(result.scalars().all())
 
-    async def check_file_access(
+    def check_file_access(
         self,
         file_uuid: str,
         user_id: str
     ) -> bool:
         """Check if user has access to a file"""
-        file_meta = await self.get_file_by_uuid(file_uuid)
+        file_meta = self.get_file_by_uuid(file_uuid)
         
         if not file_meta:
             return False
         
-        # Owner has access
         if file_meta.uploader_uid == user_id:
             return True
         
-        # Check if user has usage record
         usage_query = select(FileUsage).where(
             FileUsage.file_uuid == file_uuid,
             FileUsage.user_id == user_id
         )
-        result = await self.db.execute(usage_query)
+        result = self.db.execute(usage_query)
         usage = result.scalar_one_or_none()
         
         return usage is not None

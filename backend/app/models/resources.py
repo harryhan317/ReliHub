@@ -1,13 +1,15 @@
 """
 Resource ORM model – fully aligned with DB_资源.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, Float, Index, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy.sql import func
-from datetime import datetime
-from typing import Optional, List
 import enum
+from datetime import datetime
+from typing import Optional
+
+from sqlalchemy import Boolean, DateTime, Float, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
+
 from . import Base
 
 

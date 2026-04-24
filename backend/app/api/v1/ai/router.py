@@ -1,55 +1,72 @@
 """
 API routes for AI Conversation module.
+
+Supports:
+- Stream responses (SSE)
+- Multiple LLM providers
+- Token billing
 """
+
+import json
+import logging
+from typing import List, Optional
+
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Optional, List
+from fastapi.responses import StreamingResponse
+from sqlalchemy.orm import Session
 
-from app.core.deps import get_db, get_current_user
-from app.services.ai_service import AISessionService, AIMessageService
-from app.schemas.ai import (
-    MessageRequest,
-    CreateSessionRequest,
-    SessionResponse,
-    SessionListResponse,
-    MessageResponse,
-    MessageListResponse,
-    FeedbackRequest,
-)
+from app.core.deps import get_current_user, get_db
+from app.models.ai_message import AIMessage
+from app.models.ai_session import AISession
 from app.models.users import User
+from app.schemas.ai import (
+    CreateSessionRequest,
+    FeedbackRequest,
+    MessageListResponse,
+    MessageRequest,
+    MessageResponse,
+    SessionListResponse,
+    SessionResponse,
+)
+from app.services.ai_service import AIService
 
-router = APIRouter(prefix="/ai", tags=["AI 对话"])
+logger = logging.getLogger(__name__)
+
+router = APIRouter(tags=["AI 对话"])
 
 
 @router.post("/sessions", response_model=SessionResponse)
-async def create_session(
+def create_session(
     request: CreateSessionRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """Create a new AI session"""
-    user_id = current_user.user_uuid if current_user else None
+    from app.services.ai_service import AISessionService
+    
+    user_id = current_user.id if current_user else None
     service = AISessionService(db)
-    session = await service.create_session(user_id, request)
+    session = service.create_session(user_id, request)
     return session
 
 
 @router.get("/sessions", response_model=SessionListResponse)
-async def list_sessions(
+def list_sessions(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """List user's AI sessions"""
-    user_id = current_user.user_uuid if current_user else None
+    from app.services.ai_service import AISessionService
+    
+    user_id = current_user.id if current_user else None
     
     if not user_id:
-        # For guest users, return empty list
         return SessionListResponse(sessions=[], total=0)
     
     service = AISessionService(db)
-    sessions, total = await service.list_sessions(user_id, page, page_size)
+    sessions, total = service.list_sessions(user_id, page, page_size)
     
     return SessionListResponse(
         sessions=[SessionResponse.model_validate(s) for s in sessions],
@@ -58,62 +75,67 @@ async def list_sessions(
 
 
 @router.get("/sessions/{session_id}", response_model=SessionResponse)
-async def get_session(
+def get_session(
     session_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """Get a specific session"""
-    user_id = current_user.user_uuid if current_user else None
+    from app.services.ai_service import AISessionService
+    
+    user_id = current_user.id if current_user else None
     service = AISessionService(db)
-    session = await service.get_session(session_id, user_id)
+    session = service.get_session(session_id, user_id)
     
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     return session
 
 
 @router.delete("/sessions/{session_id}")
-async def delete_session(
+def delete_session(
     session_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """Delete a session"""
-    user_id = current_user.user_uuid if current_user else None
+    from app.services.ai_service import AISessionService
+    
+    user_id = current_user.id if current_user else None
     
     if not user_id:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="未授权")
     
     service = AISessionService(db)
-    success = await service.delete_session(session_id, user_id)
+    success = service.delete_session(session_id, user_id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
-    return {"message": "Session deleted successfully"}
+    return {"message": "会话已删除"}
 
 
 @router.get("/sessions/{session_id}/messages", response_model=MessageListResponse)
-async def list_messages(
+def list_messages(
     session_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """Get messages for a session"""
-    user_id = current_user.user_uuid if current_user else None
-    service = AISessionService(db)
+    from app.services.ai_service import AIMessageService, AISessionService
     
-    # Verify session ownership
-    session = await service.get_session(session_id, user_id)
+    user_id = current_user.id if current_user else None
+    session_service = AISessionService(db)
+    
+    session = session_service.get_session(session_id, user_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     message_service = AIMessageService(db)
-    messages, total = await message_service.get_messages(session_id, page, page_size)
+    messages, total = message_service.list_messages(session_id, page, page_size)
     
     return MessageListResponse(
         messages=[MessageResponse.model_validate(m) for m in messages],
@@ -121,67 +143,187 @@ async def list_messages(
     )
 
 
-@router.post("/sessions/{session_id}/messages", response_model=MessageResponse)
-async def create_message(
+@router.post("/sessions/{session_id}/messages")
+def create_message(
     session_id: str,
     request: MessageRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
     """
-    Send a message to AI.
+    Send a message to AI with stream support.
     
-    This endpoint:
-    1. Saves user message
-    2. Calls LLM API
-    3. Saves AI response
-    4. Updates token count
+    Supports both streaming (SSE) and non-streaming responses.
+    Use stream=true for real-time typing effect.
     """
-    user_id = current_user.user_uuid if current_user else None
+    from app.services.ai_service import AIMessageService, AISessionService
+    
+    user_id = current_user.id if current_user else None
     session_service = AISessionService(db)
     
-    # Verify session ownership
-    session = await session_service.get_session(session_id, user_id)
+    session = session_service.get_session(session_id, user_id)
     if not session:
-        raise HTTPException(status_code=404, detail="Session not found")
+        raise HTTPException(status_code=404, detail="会话不存在")
     
     message_service = AIMessageService(db)
-    
-    # Save user message
-    user_message = await message_service.create_message(
+    ai_service = AIService(db)
+
+    message_service.create_message(
         session_id=session_id,
         role="user",
         content=request.content,
-        attachment_ids=request.attachment_ids,
+        token_count=0
     )
+
+    messages = [
+        {"role": "system", "content": "You are a helpful assistant."},
+        *[_message_to_dict(m) for m in message_service.list_messages(session_id, 1, 50)[0]]
+    ]
     
-    # TODO: Call LLM API to get response
-    # For now, return a placeholder response
-    ai_message = await message_service.create_message(
-        session_id=session_id,
-        role="assistant",
-        content="This is a placeholder response. LLM integration pending.",
-        token_count=10,
-    )
+    provider_name = request.provider_name if hasattr(request, 'provider_name') else None
+    if not ai_service.check_rate_limit(provider_name, user_id):
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
     
-    # Update session token count
-    await session_service.update_token_count(session_id, ai_message.token_count)
-    
-    return ai_message
+    if request.stream:
+        return StreamingResponse(
+            _stream_response(
+                ai_service=ai_service,
+                session=session,
+                messages=messages,
+                provider_name=provider_name,
+                model=request.model if hasattr(request, 'model') else None,
+                temperature=request.temperature if hasattr(request, 'temperature') else 0.7,
+                max_tokens=request.max_tokens if hasattr(request, 'max_tokens') else 2000
+            ),
+            media_type="text/event-stream"
+        )
+    else:
+        full_content = ""
+        for chunk in ai_service.chat_completion(
+            session=session,
+            messages=messages,
+            provider_name=provider_name,
+            model=request.model if hasattr(request, 'model') else None,
+            temperature=request.temperature if hasattr(request, 'temperature') else 0.7,
+            max_tokens=request.max_tokens if hasattr(request, 'max_tokens') else 2000,
+            stream=False
+        ):
+            full_content += chunk.get("content", "")
+        
+        ai_message = message_service.create_message(
+            session_id=session_id,
+            role="assistant",
+            content=full_content,
+            token_count=0
+        )
+        
+        return MessageResponse.model_validate(ai_message)
 
 
-@router.post("/messages/{message_id}/feedback")
-async def add_feedback(
+def _stream_response(
+    ai_service: AIService,
+    session: AISession,
+    messages: list,
+    provider_name: Optional[str],
+    model: Optional[str],
+    temperature: float,
+    max_tokens: int
+):
+    """
+    Stream AI response using SSE.
+    
+    Format:
+    data: {"content": "Hello", "finish_reason": null}
+    data: {"content": "!", "finish_reason": "stop"}
+    """
+    try:
+        from app.services.ai_service import AIMessageService
+        
+        db = ai_service.db
+        message_service = AIMessageService(db)
+        
+        full_content = ""
+        
+        for chunk in ai_service.chat_completion(
+            session=session,
+            messages=messages,
+            provider_name=provider_name,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            stream=True
+        ):
+            content = chunk.get("content", "")
+            full_content += content
+
+            yield f"data: {json.dumps(chunk, ensure_ascii=False)}\n\n"
+
+        message_service.create_message(
+            session_id=session.id,
+            role="assistant",
+            content=full_content,
+            token_count=0
+        )
+
+        yield "data: [DONE]\n\n"
+
+    except Exception as e:
+        logger.error(f"Stream error: {e}")
+        yield f"data: {json.dumps({'error': str(e)})}\n\n"
+
+
+def _message_to_dict(message: AIMessage) -> dict:
+    """Convert AIMessage to dict"""
+    return {
+        "role": message.role,
+        "content": message.content
+    }
+
+
+@router.post("/sessions/{session_id}/feedback")
+def add_feedback(
+    session_id: str,
     message_id: str,
     request: FeedbackRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_current_user),
 ):
-    """Add feedback to a message"""
-    service = AIMessageService(db)
-    success = await service.add_feedback(message_id, request.feedback_type)
+    """Add feedback to an AI message"""
+    from app.services.ai_service import AIMessageService
+
+    message_service = AIMessageService(db)
+
+    message = message_service.get_message(message_id)
+    if not message or message.session_id != session_id:
+        raise HTTPException(status_code=404, detail="消息不存在")
+
+    message_service.add_feedback(
+        message_id=message_id,
+        feedback_type=request.feedback_type
+    )
     
-    if not success:
-        raise HTTPException(status_code=404, detail="Message not found")
+    return {"message": "Feedback recorded"}
+
+
+@router.get("/providers", response_model=List[dict])
+def list_providers(
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_current_user),
+):
+    """
+    List available LLM providers.
     
-    return {"message": "Feedback recorded successfully"}
+    Returns enabled providers that users can select.
+    """
+    ai_service = AIService(db)
+    providers = ai_service.get_enabled_providers()
+    
+    return [
+        {
+            "id": p.id,
+            "name": p.name,
+            "display_name": p.display_name,
+            "cost_per_1k_tokens": p.cost_per_1k_tokens
+        }
+        for p in providers
+    ]

@@ -1,54 +1,54 @@
 """
 API routes for Community/Forum module.
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 from typing import Optional
 
-from app.core.deps import get_db, get_current_user
-from app.services.community_service import TopicService, PostService
-from app.schemas.community import (
-    TopicCreateRequest,
-    TopicUpdateRequest,
-    PostCreateRequest,
-    AcceptPostRequest,
-    TopicResponse,
-    TopicListResponse,
-    TopicListItem,
-    PostResponse,
-    PostListResponse,
-)
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from app.core.deps import get_current_user, get_db
 from app.models.users import User
+from app.schemas.community import (
+    PostCreateRequest,
+    PostListResponse,
+    PostResponse,
+    TopicCreateRequest,
+    TopicListItem,
+    TopicListResponse,
+    TopicResponse,
+    TopicUpdateRequest,
+)
+from app.schemas.interaction import LikeOperationResponse, ReportRequest
+from app.services.community_service import PostService, TopicService
+from app.services.interaction_service import InteractionService
 
-router = APIRouter(prefix="/community", tags=["社区管理"])
+router = APIRouter(tags=["社区管理"])
 
-
-# ── Topic Routes ──────────────────────────────────────────────────────────────
 
 @router.post("/topics", response_model=TopicResponse)
-async def create_topic(
+def create_topic(
     request: TopicCreateRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Create a new topic"""
     topic_service = TopicService(db)
-    topic = await topic_service.create_topic(current_user.user_uuid, request)
+    topic = topic_service.create_topic(current_user.id, request)
     return topic
 
 
 @router.get("/topics", response_model=TopicListResponse)
-async def list_topics(
+def list_topics(
     category_id: Optional[int] = Query(None, description="Filter by category"),
     search: Optional[str] = Query(None, description="Search in title/content"),
     sort_by: str = Query("heat_score", description="Sort field"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """List all topics with filters"""
     topic_service = TopicService(db)
-    topics, total = await topic_service.list_topics(
+    topics, total = topic_service.list_topics(
         category_id=category_id,
         search=search,
         sort_by=sort_by,
@@ -65,81 +65,77 @@ async def list_topics(
 
 
 @router.get("/topics/{topic_id}", response_model=TopicResponse)
-async def get_topic(
+def get_topic(
     topic_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """Get a specific topic"""
     topic_service = TopicService(db)
-    topic = await topic_service.get_topic(topic_id, include_posts=False)
+    topic = topic_service.get_topic(topic_id, include_posts=False)
     
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
-    # Increment view count
-    await topic_service.increment_view(topic_id)
+    topic_service.increment_view(topic_id)
     
     return topic
 
 
 @router.put("/topics/{topic_id}", response_model=TopicResponse)
-async def update_topic(
+def update_topic(
     topic_id: str,
     request: TopicUpdateRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Update a topic"""
     topic_service = TopicService(db)
-    topic = await topic_service.update_topic(
+    topic = topic_service.update_topic(
         topic_id,
-        current_user.user_uuid,
+        current_user.id,
         request,
     )
     
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
     return topic
 
 
 @router.delete("/topics/{topic_id}")
-async def delete_topic(
+def delete_topic(
     topic_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a topic"""
     topic_service = TopicService(db)
-    success = await topic_service.delete_topic(topic_id, current_user.user_uuid)
+    success = topic_service.delete_topic(topic_id, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
-    return {"message": "Topic deleted successfully"}
+    return {"message": "话题已删除"}
 
-
-# ── Post Routes ───────────────────────────────────────────────────────────────
 
 @router.post("/topics/{topic_id}/posts", response_model=PostResponse)
-async def create_post(
+def create_post(
     topic_id: str,
     request: PostCreateRequest,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Create a new post/reply"""
     topic_service = TopicService(db)
     
-    # Verify topic exists
-    topic = await topic_service.get_topic(topic_id)
+    topic = topic_service.get_topic(topic_id)
     if not topic:
-        raise HTTPException(status_code=404, detail="Topic not found")
+        raise HTTPException(status_code=404, detail="话题不存在")
     
     post_service = PostService(db)
-    post = await post_service.create_post(
+    post = post_service.create_post(
         topic_id,
-        current_user.user_uuid,
+        current_user.id,
         request,
     )
     
@@ -147,15 +143,15 @@ async def create_post(
 
 
 @router.get("/topics/{topic_id}/posts", response_model=PostListResponse)
-async def list_posts(
+def list_posts(
     topic_id: str,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
 ):
     """List posts for a topic"""
     post_service = PostService(db)
-    posts, total = await post_service.get_posts(topic_id, page, page_size)
+    posts, total = post_service.get_posts(topic_id, page, page_size)
     
     return PostListResponse(
         posts=[PostResponse.model_validate(p) for p in posts],
@@ -166,53 +162,108 @@ async def list_posts(
 
 
 @router.post("/posts/{post_id}/accept")
-async def accept_post(
+def accept_post(
     post_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Accept a post as the answer (topic author only)"""
     post_service = PostService(db)
-    post = await post_service.get_post(post_id)
+    post = post_service.get_post(post_id)
     
     if not post:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(status_code=404, detail="帖子不存在")
     
-    topic_service = TopicService(db)
-    success = await post_service.accept_post(
+    success = post_service.accept_post(
         post.topic_id,
         post_id,
-        current_user.user_uuid,
+        current_user.id,
     )
     
     if not success:
-        raise HTTPException(status_code=403, detail="Not authorized to accept this post")
+        raise HTTPException(status_code=403, detail="无权采纳此帖子")
     
-    return {"message": "Post accepted as answer"}
+    return {"message": "帖子已采纳为答案"}
 
 
 @router.delete("/posts/{post_id}")
-async def delete_post(
+def delete_post(
     post_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Delete a post"""
     post_service = PostService(db)
-    success = await post_service.delete_post(post_id, current_user.user_uuid)
+    success = post_service.delete_post(post_id, current_user.id)
     
     if not success:
-        raise HTTPException(status_code=404, detail="Post not found")
+        raise HTTPException(status_code=404, detail="帖子不存在")
     
-    return {"message": "Post deleted successfully"}
+    return {"message": "帖子已删除"}
 
 
-@router.post("/posts/{post_id}/like")
-async def like_post(
+@router.post("/posts/{post_id}/like", response_model=LikeOperationResponse)
+def like_post(
     post_id: str,
-    db: AsyncSession = Depends(get_db),
+    db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
     """Like a post"""
-    # TODO: Implement like logic
-    return {"message": "Post liked"}
+    service = InteractionService(db)
+    return service.like_post(current_user.id, post_id)
+
+
+@router.post("/topics/{topic_id}/like", response_model=LikeOperationResponse)
+def like_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Like a topic"""
+    service = InteractionService(db)
+    return service.like_topic(current_user.id, topic_id)
+
+
+@router.delete("/topics/{topic_id}/like", response_model=LikeOperationResponse)
+def unlike_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Unlike a topic"""
+    service = InteractionService(db)
+    return service.unlike_topic(current_user.id, topic_id)
+
+
+@router.post("/topics/{topic_id}/collect")
+def collect_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Collect/bookmark a topic"""
+    service = InteractionService(db)
+    return service.collect_topic(current_user.id, topic_id)
+
+
+@router.delete("/topics/{topic_id}/collect")
+def uncollect_topic(
+    topic_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Uncollect/remove bookmark for a topic"""
+    service = InteractionService(db)
+    return service.uncollect_topic(current_user.id, topic_id)
+
+
+@router.post("/topics/{topic_id}/report")
+def report_topic(
+    topic_id: str,
+    request: ReportRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """Report a topic"""
+    service = InteractionService(db)
+    return service.report_topic(current_user.id, topic_id, request.reason, request.detail)

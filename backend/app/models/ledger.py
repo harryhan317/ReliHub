@@ -1,13 +1,15 @@
 """
 Point Ledger ORM model – fully aligned with DB_可可豆.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Index, Enum as SQLEnum, Float
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
+import enum
 from datetime import datetime
 from typing import Optional
-import enum
+
+from sqlalchemy import Boolean, DateTime, Float, Integer, String
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
+
 from . import Base
 
 

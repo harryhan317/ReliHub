@@ -1,10 +1,11 @@
 """
 Pydantic Schemas for File Management module.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class FileStatus(str, Enum):
@@ -31,8 +32,6 @@ class TargetType(str, Enum):
     TOPIC = "TOPIC"
 
 
-# ── Request Schemas ───────────────────────────────────────────────────────────
-
 class FileUploadRequest(BaseModel):
     """Request schema for file upload metadata"""
     file_name: str = Field(..., min_length=1, max_length=255, description="Original file name")
@@ -46,10 +45,10 @@ class FileUpdateStatusRequest(BaseModel):
     reason: Optional[str] = Field(None, max_length=500, description="Reason for status change")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class FileMetaResponse(BaseModel):
     """Response schema for file metadata"""
+    model_config = ConfigDict(from_attributes=True)
+    
     file_uuid: str
     file_hash: str
     oss_path: str
@@ -63,21 +62,17 @@ class FileMetaResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class FileUsageResponse(BaseModel):
     """Response schema for file usage record"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     file_uuid: str
     target_id: str
     target_type: TargetType
     user_id: str
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class FileUploadResponse(BaseModel):
@@ -88,8 +83,8 @@ class FileUploadResponse(BaseModel):
     file_name: str
     file_size: int
     mime_type: str
-    upload_url: Optional[str] = None  # Pre-signed URL for direct upload
-    download_url: Optional[str] = None  # Pre-signed URL for download
+    upload_url: Optional[str] = None
+    download_url: Optional[str] = None
 
 
 class FileListResponse(BaseModel):

@@ -1,13 +1,15 @@
 """
 Notification ORM model – fully aligned with DB_通知.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, Index, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy.sql import func
+import enum
 from datetime import datetime
 from typing import Optional
-import enum
+
+from sqlalchemy import Boolean, DateTime, String, Text
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.sql import func
+
 from . import Base
 
 

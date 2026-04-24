@@ -1,13 +1,15 @@
 """
 Topic and Post ORM models – fully aligned with DB_社区.md.
 """
-from sqlalchemy import String, Integer, Boolean, DateTime, Text, Float, Index, Enum as SQLEnum
-from sqlalchemy.dialects.postgresql import JSONB
+import enum
+from datetime import datetime
+from typing import List, Optional
+
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
-from datetime import datetime
-from typing import Optional, List
-import enum
+
 from . import Base
 
 
@@ -52,6 +54,7 @@ class Topic(Base):
     # ── Statistics ────────────────────────────────────────────────────────────
     view_count: Mapped[int] = mapped_column(Integer, default=0)
     post_count: Mapped[int] = mapped_column(Integer, default=0)
+    like_count: Mapped[int] = mapped_column(Integer, default=0)
     heat_score: Mapped[float] = mapped_column(Float, default=0.0, index=True)  # Heat index
 
     # ── Anonymization (for deleted users) ─────────────────────────────────────
@@ -71,16 +74,27 @@ class Post(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True)
 
     # ── Topic Reference ───────────────────────────────────────────────────────
-    topic_id: Mapped[str] = mapped_column(String(36), index=True)  # FK -> topics.id
+    topic_id: Mapped[str] = mapped_column(
+        String(36), 
+        ForeignKey("topics.id", ondelete="CASCADE"),
+        index=True
+    )  # FK -> topics.id
 
     # ── Author ────────────────────────────────────────────────────────────────
-    author_id: Mapped[str] = mapped_column(String(36))  # FK -> users.id
+    author_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("users.id", ondelete="SET NULL")
+    )  # FK -> users.id
 
     # ── Content ───────────────────────────────────────────────────────────────
     content: Mapped[str] = mapped_column(Text)  # Post content
 
     # ── Parent Post (for nested comments) ─────────────────────────────────────
-    parent_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True)  # FK -> posts.id (self-reference)
+    parent_id: Mapped[Optional[str]] = mapped_column(
+        String(36), 
+        ForeignKey("posts.id", ondelete="SET NULL"),
+        nullable=True
+    )  # FK -> posts.id (self-reference)
 
     # ── Acceptance Status ─────────────────────────────────────────────────────
     is_accepted: Mapped[bool] = mapped_column(Boolean, default=False)  # Accepted as best answer
@@ -96,3 +110,4 @@ class Post(Base):
 
     # ── Relationships ─────────────────────────────────────────────────────────
     topic: Mapped["Topic"] = relationship("Topic", back_populates="posts")
+    parent: Mapped[Optional["Post"]] = relationship("Post", remote_side="Post.id", foreign_keys="Post.parent_id")

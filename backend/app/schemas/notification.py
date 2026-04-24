@@ -1,10 +1,11 @@
 """
 Pydantic Schemas for Notification module.
 """
-from pydantic import BaseModel, Field
-from typing import Optional, List
 from datetime import datetime
 from enum import Enum
+from typing import List, Optional
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class NotificationType(str, Enum):
@@ -21,8 +22,6 @@ class NotificationPriority(str, Enum):
     NORMAL = "NORMAL"
     HIGH = "HIGH"
 
-
-# ── Request Schemas ───────────────────────────────────────────────────────────
 
 class MarkAsReadRequest(BaseModel):
     """Request schema for marking notification as read"""
@@ -49,10 +48,10 @@ class BroadcastRequest(BaseModel):
     exclude_user_ids: Optional[List[str]] = Field(None, description="User IDs to exclude from broadcast")
 
 
-# ── Response Schemas ──────────────────────────────────────────────────────────
-
 class NotificationResponse(BaseModel):
     """Response schema for a single notification"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     receiver_id: str
     sender_id: Optional[str] = None
@@ -66,12 +65,11 @@ class NotificationResponse(BaseModel):
     read_at: Optional[datetime] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
-
 
 class NotificationListItem(BaseModel):
     """Response schema for notification list item"""
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     type: NotificationType
     priority: NotificationPriority
@@ -79,9 +77,6 @@ class NotificationListItem(BaseModel):
     content: str
     is_read: bool
     created_at: datetime
-
-    class Config:
-        from_attributes = True
 
 
 class NotificationListResponse(BaseModel):
@@ -98,4 +93,4 @@ class NotificationStatsResponse(BaseModel):
     total_count: int
     unread_count: int
     read_count: int
-    by_type: dict  # {"SYSTEM": 5, "INTERACTION": 10, ...}
+    by_type: dict

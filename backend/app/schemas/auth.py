@@ -4,10 +4,9 @@ Aligned with: API_认证鉴权.md §2 & PRD_MVP_登录注册模块.md.
 """
 import re
 from typing import Optional
-from pydantic import BaseModel, field_validator
 
+from pydantic import BaseModel, ConfigDict, field_validator
 
-# ── Requests ──────────────────────────────────────────────────────────────────
 
 class SendCodeRequest(BaseModel):
     phone: str
@@ -68,9 +67,9 @@ class RefreshTokenRequest(BaseModel):
     refresh_token: str
 
 
-# ── Responses ─────────────────────────────────────────────────────────────────
-
 class UserInfoResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     nickname: str
     avatar_url: Optional[str] = None
@@ -80,9 +79,6 @@ class UserInfoResponse(BaseModel):
     bonus_beans: int
     is_reward_triggered: bool
     is_new_user: bool = False
-
-    class Config:
-        from_attributes = True
 
 
 class TokenResponse(BaseModel):
