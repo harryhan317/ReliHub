@@ -92,15 +92,16 @@ export interface AuditLogItem {
   id: string;
   admin_id: string;
   action: string;
-  target_type: string;
-  target_id: string;
-  detail: string;
+  target_type: string | null;
+  target_id: string | null;
+  before_data: string | null;
+  after_data: string | null;
   ip_address: string | null;
   created_at: string;
 }
 
 export interface AuditLogListResponse {
-  items: AuditLogItem[];
+  logs: AuditLogItem[];
   total: number;
   page: number;
   page_size: number;

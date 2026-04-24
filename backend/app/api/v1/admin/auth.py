@@ -6,10 +6,11 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db
+from app.core.deps import get_db, require_admin
 from app.core.security import verify_password, create_access_token, create_refresh_token
 from app.models.administrators import AdminUser
 from app.schemas.common import ApiResponse
+from app.services.admin_service import AdminService
 from pydantic import BaseModel
 
 
@@ -50,6 +51,18 @@ def admin_login(
     admin.last_login_at = datetime.utcnow()
     db.commit()
 
+    client_ip = request.client.host if request.client else None
+    admin_service = AdminService(db, admin)
+    admin_service._create_audit_log(
+        action="ADMIN_LOGIN",
+        target_type="admin_user",
+        target_id=admin.id,
+        before_data={},
+        after_data={"username": admin.username, "role": admin.role},
+        ip_address=client_ip
+    )
+    db.commit()
+
     access = create_access_token(admin.id)
     refresh = create_refresh_token(admin.id)
 
@@ -66,3 +79,29 @@ def admin_login(
             ),
         ),
     )
+
+
+@router.post("/auth/logout")
+def admin_logout(
+    request: Request,
+    db: Session = Depends(get_db),
+    admin: AdminUser = Depends(require_admin),
+):
+    from app.core.security import decode_token
+
+    client_ip = request.client.host if request.client else None
+    token = request.headers.get("Authorization", "").replace("Bearer ", "")
+
+    if token:
+        admin_service = AdminService(db, admin)
+        admin_service._create_audit_log(
+            action="ADMIN_LOGOUT",
+            target_type="admin_user",
+            target_id=admin.id,
+            before_data={},
+            after_data={"username": admin.username},
+            ip_address=client_ip
+        )
+        db.commit()
+
+    return ApiResponse(code="000000", msg="ok", data={})

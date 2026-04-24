@@ -17,7 +17,7 @@ router = APIRouter(prefix="/audit-logs", tags=["Admin - Audit"])
 @router.get("", response_model=AuditLogListResponse)
 def list_audit_logs(
     admin_id: Optional[str] = Query(None, description="Filter by admin ID"),
-    action: Optional[str] = Query(None, description="Filter by action type"),
+    action: Optional[str] = Query(None, description="Filter by action type(s), comma-separated for multiple"),
     page: int = Query(1, ge=1, description="Page number"),
     page_size: int = Query(20, ge=1, le=100, description="Page size"),
     db: Session = Depends(get_db),
@@ -25,18 +25,22 @@ def list_audit_logs(
 ):
     """
     List audit logs with pagination and filtering.
-    
+
     - **admin_id**: Filter by admin who performed the action
-    - **action**: Filter by action type (BAN_USER, APPROVE_RESOURCE, etc.)
+    - **action**: Filter by action type (BAN_USER, APPROVE_RESOURCE, etc.), comma-separated for multiple
     """
+    actions = None
+    if action:
+        actions = [a.strip() for a in action.split(',')]
+
     service = AdminService(db, admin)
     logs, total = service.list_audit_logs(
         admin_id=admin_id,
-        action=action,
+        actions=actions,
         page=page,
         page_size=page_size
     )
-    
+
     return AuditLogListResponse(
         logs=[AuditLogResponse.model_validate(log) for log in logs],
         total=total,

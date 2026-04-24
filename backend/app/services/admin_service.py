@@ -385,29 +385,29 @@ class AdminService:
     def list_audit_logs(
         self,
         admin_id: Optional[str] = None,
-        action: Optional[str] = None,
+        actions: Optional[List[str]] = None,
         page: int = 1,
         page_size: int = 20
     ) -> Tuple[List[AdminAuditLog], int]:
         filters = []
-        
+
         if admin_id:
             filters.append(AdminAuditLog.admin_id == admin_id)
-        
-        if action:
-            filters.append(AdminAuditLog.action == action)
-        
+
+        if actions:
+            filters.append(AdminAuditLog.action.in_(actions))
+
         count_query = select(func.count()).where(and_(*filters)) if filters else select(func.count()).select_from(AdminAuditLog)
         total = self.db.execute(count_query).scalar() or 0
-        
+
         query = select(AdminAuditLog)
         if filters:
             query = query.where(and_(*filters))
         query = query.order_by(AdminAuditLog.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
-        
+
         result = self.db.execute(query)
         logs = result.scalars().all()
-        
+
         return list(logs), total
 
     def get_audit_log(self, log_id: str) -> Optional[AdminAuditLog]:
@@ -705,8 +705,10 @@ class AdminService:
             )
         
         config = self.get_system_config(request.config_key)
-        
+
         if config:
+            if config.config_value == request.config_value and (request.description is None or request.description == config.description):
+                return config
             before_data = {"config_key": config.config_key, "config_value": config.config_value}
             config.config_value = request.config_value
             config.description = request.description or config.description
@@ -722,7 +724,7 @@ class AdminService:
             )
             self.db.add(config)
             after_data = {"config_key": request.config_key, "config_value": request.config_value}
-        
+
         self._create_audit_log(
             action="UPDATE_CONFIG",
             target_type="system_configs",
@@ -731,7 +733,7 @@ class AdminService:
             after_data=after_data,
             ip_address=ip_address
         )
-        
+
         self.db.commit()
         self.db.refresh(config)
         return config
