@@ -495,8 +495,9 @@ class AdminService:
             "ai_zhuanjia_max_rounds",
             "ai_zhuanjia_daily_total_rounds",
             "ai_zhuanjia_session_token_limit",
-            # 等级体系配置 (ConfigLevelPage)
-            "level_xinbing_min",
+            # 分类管理配置 (ConfigCategoryPage)
+            "resource_categories",
+            "community_categories",
             "level_xinbing_max",
             "level_xinbing_upgrade",
             "level_cainiao_min",

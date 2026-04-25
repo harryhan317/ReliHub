@@ -21,6 +21,8 @@ export default function ConfigCategoryPage() {
   const [showAddCommunity, setShowAddCommunity] = useState(false);
   const [newResourceName, setNewResourceName] = useState('');
   const [newCommunityName, setNewCommunityName] = useState('');
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [confirmData, setConfirmData] = useState<{type: 'resource' | 'community', id: number, name: string} | null>(null);
 
   const showToast = (msg: string, type: 'success' | 'error') => {
     setToast({ msg, type });
@@ -82,38 +84,113 @@ export default function ConfigCategoryPage() {
     }
   };
 
-  const handleToggleVisibility = useCallback(async (type: 'resource' | 'community', id: number) => {
+  const handleDeleteCategory = (type: 'resource' | 'community', id: number) => {
+    const categories = type === 'resource' ? resourceCats : communityCats;
+    const category = categories.find(cat => cat.id === id);
+    
+    if (!category) return;
+    
+    // 检查资源数或话题数
+    if (category.count > 0) {
+      const categoryType = type === 'resource' ? '资源' : '话题';
+      showToast(`该分类下存在${categoryType}，不可隐藏或删除`, 'error');
+      return;
+    }
+    
+    // 显示自定义确认对话框
+    setConfirmData({ type, id, name: category.name });
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!confirmData) return;
+    
+    const { type, id } = confirmData;
+    
+    if (type === 'resource') {
+      const updated = resourceCats.filter(cat => cat.id !== id);
+      setResourceCats(updated);
+      saveCategories('resource_categories', 'community_categories', updated, communityCats);
+    } else {
+      const updated = communityCats.filter(cat => cat.id !== id);
+      setCommunityCats(updated);
+      saveCategories('resource_categories', 'community_categories', resourceCats, updated);
+    }
+    
+    setShowConfirmDialog(false);
+    setConfirmData(null);
+  };
+
+  const handleCancelDelete = () => {
+    setShowConfirmDialog(false);
+    setConfirmData(null);
+  };
+
+  const handleToggleVisibility = (type: 'resource' | 'community', id: number) => {
+    const categories = type === 'resource' ? resourceCats : communityCats;
+    const category = categories.find(cat => cat.id === id);
+    
+    if (!category) return;
+    
+    // 检查资源数或话题数
+    if (category.count > 0) {
+      const categoryType = type === 'resource' ? '资源' : '话题';
+      showToast(`该分类下存在${categoryType}，不可隐藏或删除`, 'error');
+      return;
+    }
+    
     if (type === 'resource') {
       const updated = resourceCats.map((cat) =>
         cat.id === id ? { ...cat, visible: !cat.visible } : cat
       );
       setResourceCats(updated);
-      await saveCategories('resource_categories', 'community_categories', updated, communityCats);
+      saveCategories('resource_categories', 'community_categories', updated, communityCats);
     } else {
       const updated = communityCats.map((cat) =>
         cat.id === id ? { ...cat, visible: !cat.visible } : cat
       );
       setCommunityCats(updated);
-      await saveCategories('resource_categories', 'community_categories', resourceCats, updated);
+      saveCategories('resource_categories', 'community_categories', resourceCats, updated);
     }
-  }, [resourceCats, communityCats]);
+  };
 
   const handleEditStart = (cat: CategoryItem) => {
     setEditingId(cat.id || null);
     setEditingName(cat.name);
   };
 
+  const checkDuplicateName = (type: 'resource' | 'community', name: string, excludeId?: number): boolean => {
+    const categories = type === 'resource' ? resourceCats : communityCats;
+    const normalizedNewName = name.trim().toLowerCase();
+    
+    return categories.some(cat => {
+      if (excludeId && cat.id === excludeId) return false;
+      return cat.name.toLowerCase() === normalizedNewName;
+    });
+  };
+
   const handleEditSave = useCallback(async (type: 'resource' | 'community', id: number) => {
+    if (!editingName.trim()) {
+      showToast('请输入分类名称', 'error');
+      return;
+    }
+
+    // 检查重复名称
+    if (checkDuplicateName(type, editingName, id)) {
+      showToast('分类名称已存在，请使用其他名称', 'error');
+      return;
+    }
+
     if (type === 'resource') {
       const updated = resourceCats.map((cat) =>
-        cat.id === id ? { ...cat, name: editingName } : cat
+        cat.id === id ? { ...cat, name: editingName.trim() } : cat
       );
       setResourceCats(updated);
       setEditingId(null);
       await saveCategories('resource_categories', 'community_categories', updated, communityCats);
     } else {
       const updated = communityCats.map((cat) =>
-        cat.id === id ? { ...cat, name: editingName } : cat
+        cat.id === id ? { ...cat, name: editingName.trim() } : cat
       );
       setCommunityCats(updated);
       setEditingId(null);
@@ -126,6 +203,13 @@ export default function ConfigCategoryPage() {
       showToast('请输入分类名称', 'error');
       return;
     }
+
+    // 检查重复名称
+    if (checkDuplicateName('resource', newResourceName)) {
+      showToast('分类名称已存在，请使用其他名称', 'error');
+      return;
+    }
+
     const newCat: CategoryItem = {
       id: Date.now(),
       name: newResourceName.trim(),
@@ -145,6 +229,13 @@ export default function ConfigCategoryPage() {
       showToast('请输入分类名称', 'error');
       return;
     }
+
+    // 检查重复名称
+    if (checkDuplicateName('community', newCommunityName)) {
+      showToast('分类名称已存在，请使用其他名称', 'error');
+      return;
+    }
+
     const newCat: CategoryItem = {
       id: Date.now(),
       name: newCommunityName.trim(),
@@ -158,6 +249,42 @@ export default function ConfigCategoryPage() {
     setShowAddCommunity(false);
     await saveCategories('resource_categories', 'community_categories', resourceCats, updated);
   }, [newCommunityName, resourceCats, communityCats]);
+
+  const handleMoveUp = (type: 'resource' | 'community', index: number) => {
+    if (index === 0) return;
+    
+    const cats = type === 'resource' ? [...resourceCats] : [...communityCats];
+    if (index > 0 && index < cats.length) {
+      const temp = cats[index]!;
+      cats[index] = cats[index - 1]!;
+      cats[index - 1] = temp;
+    }
+    
+    if (type === 'resource') {
+      setResourceCats(cats);
+      saveCategories('resource_categories', 'community_categories', cats, communityCats);
+    } else {
+      setCommunityCats(cats);
+      saveCategories('resource_categories', 'community_categories', resourceCats, cats);
+    }
+  };
+
+  const handleMoveDown = (type: 'resource' | 'community', index: number) => {
+    const cats = type === 'resource' ? [...resourceCats] : [...communityCats];
+    if (index < cats.length - 1) {
+      const temp = cats[index]!;
+      cats[index] = cats[index + 1]!;
+      cats[index + 1] = temp;
+    }
+    
+    if (type === 'resource') {
+      setResourceCats(cats);
+      saveCategories('resource_categories', 'community_categories', cats, communityCats);
+    } else {
+      setCommunityCats(cats);
+      saveCategories('resource_categories', 'community_categories', resourceCats, cats);
+    }
+  };
 
   const handleCancelAdd = (type: 'resource' | 'community') => {
     if (type === 'resource') {
@@ -173,7 +300,75 @@ export default function ConfigCategoryPage() {
 
   return (
     <>
-      {toast && <div className={`toast toast-${toast.type}`}>{toast.msg}</div>}
+      {toast && (
+        <div 
+          className={`toast toast-${toast.type}`}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 9999,
+            padding: '12px 20px',
+            borderRadius: '4px',
+            color: 'white',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            backgroundColor: toast.type === 'success' ? '#28a745' : '#dc3545'
+          }}
+        >
+          {toast.msg}
+        </div>
+      )}
+      
+      {showConfirmDialog && confirmData && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10000
+          }}
+        >
+          <div 
+            style={{
+              backgroundColor: 'white',
+              padding: '24px',
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
+              minWidth: '400px',
+              maxWidth: '500px'
+            }}
+          >
+            <h3 style={{ margin: '0 0 16px 0', color: '#333' }}>确认删除</h3>
+            <p style={{ margin: '0 0 24px 0', color: '#666', lineHeight: '1.5' }}>
+              确定要删除分类"{confirmData.name}"吗？请谨慎操作
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+              <button 
+                className="btn btn-sm"
+                onClick={handleCancelDelete}
+                style={{ padding: '8px 16px' }}
+              >
+                取消
+              </button>
+              <button 
+                className="btn btn-sm btn-warning"
+                onClick={handleConfirmDelete}
+                style={{ padding: '8px 16px' }}
+              >
+                确定删除
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="config-grid">
         <div className="config-card">
           <div className="config-card-title">
@@ -190,16 +385,17 @@ export default function ConfigCategoryPage() {
           <table className="data-table" style={{ boxShadow: 'none' }}>
             <thead>
               <tr>
+                <th>序号</th>
                 <th>分类名称</th>
                 <th>资源数</th>
                 <th>显示状态</th>
-                <th>排序</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {resourceCats.map((cat) => (
+              {resourceCats.map((cat, index) => (
                 <tr key={cat.id}>
+                  <td>{index + 1}</td>
                   <td>
                     {editingId === cat.id ? (
                       <input
@@ -216,7 +412,6 @@ export default function ConfigCategoryPage() {
                   </td>
                   <td>{cat.count}</td>
                   <td><span className={`badge ${cat.visible ? 'badge-success' : 'badge-default'}`}>{cat.visible ? '显示' : '隐藏'}</span></td>
-                  <td>{cat.sort}</td>
                   <td>
                     {editingId === cat.id ? (
                       <>
@@ -244,13 +439,42 @@ export default function ConfigCategoryPage() {
                         >
                           编辑
                         </button>
+                        <span style={{ marginRight: '5px' }}></span>
                         <button
                           className={`btn btn-sm ${cat.visible ? 'btn-danger' : 'btn-success'}`}
                           onClick={() => handleToggleVisibility('resource', cat.id!)}
                           disabled={saving}
+                          title={cat.count > 0 ? '该分类下存在资源，不可隐藏或删除' : ''}
                         >
                           {cat.visible ? '隐藏' : '显示'}
                         </button>
+                        <span style={{ marginRight: '5px' }}></span>
+                        <button
+                          className="btn btn-sm btn-warning"
+                          onClick={() => handleDeleteCategory('resource', cat.id!)}
+                          disabled={saving}
+                          title={cat.count > 0 ? '该分类下存在资源，不可隐藏或删除' : ''}
+                        >
+                          删除
+                        </button>
+                        <span style={{ marginLeft: '5px' }}>
+                          <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: '16px', padding: '2px' }}
+                            onClick={() => handleMoveUp('resource', index)}
+                            disabled={index === 0}
+                            title="上移"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: '16px', padding: '2px' }}
+                            onClick={() => handleMoveDown('resource', index)}
+                            disabled={index === resourceCats.length - 1}
+                            title="下移"
+                          >
+                            ↓
+                          </button>
+                        </span>
                       </>
                     )}
                   </td>
@@ -258,6 +482,7 @@ export default function ConfigCategoryPage() {
               ))}
               {showAddResource && (
                 <tr>
+                  <td>{resourceCats.length + 1}</td>
                   <td>
                     <input
                       className="config-input"
@@ -271,7 +496,6 @@ export default function ConfigCategoryPage() {
                   </td>
                   <td>0</td>
                   <td><span className="badge badge-success">显示</span></td>
-                  <td>{resourceCats.length + 1}</td>
                   <td>
                     <button
                       className="btn btn-sm btn-primary"
@@ -308,16 +532,17 @@ export default function ConfigCategoryPage() {
           <table className="data-table" style={{ boxShadow: 'none' }}>
             <thead>
               <tr>
+                <th>序号</th>
                 <th>分类名称</th>
                 <th>话题数</th>
                 <th>显示状态</th>
-                <th>排序</th>
                 <th>操作</th>
               </tr>
             </thead>
             <tbody>
-              {communityCats.map((cat) => (
+              {communityCats.map((cat, index) => (
                 <tr key={cat.id}>
+                  <td>{index + 1}</td>
                   <td>
                     {editingId === cat.id ? (
                       <input
@@ -334,7 +559,6 @@ export default function ConfigCategoryPage() {
                   </td>
                   <td>{cat.count}</td>
                   <td><span className={`badge ${cat.visible ? 'badge-success' : 'badge-default'}`}>{cat.visible ? '显示' : '隐藏'}</span></td>
-                  <td>{cat.sort}</td>
                   <td>
                     {editingId === cat.id ? (
                       <>
@@ -362,13 +586,42 @@ export default function ConfigCategoryPage() {
                         >
                           编辑
                         </button>
+                        <span style={{ marginRight: '5px' }}></span>
                         <button
                           className={`btn btn-sm ${cat.visible ? 'btn-danger' : 'btn-success'}`}
                           onClick={() => handleToggleVisibility('community', cat.id!)}
                           disabled={saving}
+                          title={cat.count > 0 ? '该分类下存在话题，不可隐藏或删除' : ''}
                         >
                           {cat.visible ? '隐藏' : '显示'}
                         </button>
+                        <span style={{ marginRight: '5px' }}></span>
+                        <button
+                          className="btn btn-sm btn-warning"
+                          onClick={() => handleDeleteCategory('community', cat.id!)}
+                          disabled={saving}
+                          title={cat.count > 0 ? '该分类下存在话题，不可隐藏或删除' : ''}
+                        >
+                          删除
+                        </button>
+                        <span style={{ marginLeft: '5px' }}>
+                          <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: '16px', padding: '2px' }}
+                            onClick={() => handleMoveUp('community', index)}
+                            disabled={index === 0}
+                            title="上移"
+                          >
+                            ↑
+                          </button>
+                          <button
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#666', fontSize: '16px', padding: '2px' }}
+                            onClick={() => handleMoveDown('community', index)}
+                            disabled={index === communityCats.length - 1}
+                            title="下移"
+                          >
+                            ↓
+                          </button>
+                        </span>
                       </>
                     )}
                   </td>
@@ -376,6 +629,7 @@ export default function ConfigCategoryPage() {
               ))}
               {showAddCommunity && (
                 <tr>
+                  <td>{communityCats.length + 1}</td>
                   <td>
                     <input
                       className="config-input"
@@ -389,7 +643,6 @@ export default function ConfigCategoryPage() {
                   </td>
                   <td>0</td>
                   <td><span className="badge badge-success">显示</span></td>
-                  <td>{communityCats.length + 1}</td>
                   <td>
                     <button
                       className="btn btn-sm btn-primary"
